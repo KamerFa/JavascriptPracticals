@@ -6,3 +6,7 @@
 .form-check-inline{
     margin-right: 0 !important;
 }
+
+#card{
+    border: 1px solid red;
+}
