@@ -1,11 +1,3 @@
-const productsJSON = new Object(
-        {
-            "products": [
-
-            ]
-        }
-    );
-const filters = getFilters();
 const productsContainer = document.getElementById('products');
 const filtersContainer = document.getElementById('filters');
 const filteredProducts = new Object(
@@ -15,39 +7,17 @@ const filteredProducts = new Object(
             ]
         }
     );
+const productsJSON = new Object(
+    {
+        "products": [
 
-    function getFilters(){
-        const items = [];
-        const filter = "filter";
-
-        for(let [key, value] of Object.entries(localStorage)){
-            if(key.startsWith(filter)){
-                items.push(value);
-            }
-        } 
-        
-        console.log("FILTERED FROM LOCAL", items);
-        return items;
+        ]
     }
-
-
-    function filterProducts(obj, filters, filteredProducts) {
-        let products = obj.products;
-
-        for (let i = 0; i < products.length; i++) {
-            const product = products[i];
-            if(filters.includes(product.product_type)){
-                filteredProducts.products.push(product);
-            }
-        } 
-    }
-
-
-    async function getProducts(obj)
-        {
+);
+    async function getProducts(obj) {
         const response = await fetch('./products.json');
         const data = await response.json();
-        
+
         let products = data.products;
 
 
@@ -57,6 +27,107 @@ const filteredProducts = new Object(
         }
     }
 
+    function getOptions(obj){
+
+        let products = obj.products;
+
+        for(let i = 0; i < products.length; i++){
+            let product = products[i];
+            
+                
+            const card = document.createElement('div');
+            card.id = 'card';
+            card.className='col-4';
+
+            const image = document.createElement('div');
+            image.innerHTML = `
+                <img src=${product.images[0].src} alt="" srcset="" class="img-fluid">
+            `;
+
+            const title = document.createElement('div');
+            title.className = "product-title d-flex";
+            title.innerHTML =
+            `<h5 class="fs-5">${product.title}<h5>`;
+            
+            const colors = document.createElement('div');
+            colors.id = 'product-color-options'
+            colors.className = "d-flex flex-wrap";
+
+            const sizes = document.createElement('div');
+            sizes.id = 'product-size-options';
+            sizes.className = "d-flex"
+
+            productsContainer.appendChild(card);
+            
+            card.appendChild(image);
+            card.appendChild(title);
+            card.appendChild(colors);
+            card.appendChild(sizes);
+
+            for(const option of product.options){
+                let values = option.values;
+                let j = 0;
+
+                switch (option.name) {
+                    case 'Color':
+                        values.forEach(value => {
+                            // Create a new element for each value
+                            const element = document.createElement('div');
+                            element.id = option.name;
+                            element.className = `${value} mx-1`;
+                            element.innerHTML = `
+                                    ${value}
+                            `;
+                            colors.appendChild(element);
+                        });
+                        break;
+                    case 'Size':
+                        values.forEach(value => {
+                            // Create a new element for each value
+                            const element = document.createElement('div');
+                            element.id = option.name;
+                            element.className = `${value} mx-1`
+                            element.innerHTML = `
+                                <div class="${value}">
+                                    ${value}
+                                </div>
+                            `;
+                            sizes.appendChild(element);
+                        });
+                        break;
+                    default:
+                        values.forEach(value => {
+                            // Create a new element for each value
+                            const element = document.createElement('div');
+                            element.id = option.name;
+                            element.innerHTML = `
+                                <div class="${value}">
+                                    ${value}
+                                </div>
+                            `;
+                            card.appendChild(element);
+                        });
+                }
+            }
+            };
+    };
+
+
+
+    // function filterProducts(obj, filters, filteredProducts) {
+    //     let products = obj.products;
+
+    //     for (let i = 0; i < products.length; i++) {
+    //         const product = products[i];
+    //         if(filters.includes(product.product_type)){
+    //             filteredProducts.products.push(product);
+    //         }
+    //     } 
+    // }
+
+
+
+
     function renderCards(obj){
 
             const productsMap = obj.products.map(product => {
@@ -65,7 +136,7 @@ const filteredProducts = new Object(
                     card.className = ("product-card col-4");
                     card.innerHTML =
                         `<div>
-                            <img src='${product.images[0].src}' class="img-fluid">
+                            <img src=${product.images[0].src} class="img-fluid">
                             ${product.title}
                         </div>`;
 
@@ -74,98 +145,26 @@ const filteredProducts = new Object(
             });
             productsMap.forEach(card => productsContainer.appendChild(card));
         };
-        
     
-
-    function renderFilters(obj){
-
-        const uniqueTypes = new Object(
-            {
-                "types":[
-                    {
-                        "index": 1,
-                        "id": "Dresses",
-                    },
-                    {   
-                        "index": 2,
-                        "id": "Jacket",
-                    },
-                    {
-                        "index": 3,
-                        "id": "Trousers",
-                    },
-                    {
-                        "index": 4,
-                        "id": "Blouses",
-                    },
-                    {   
-                        "index": 5,
-                        "id": "T-Shirt",
-                    },
-                    {
-                        "index": 6,
-                        "id": "Denim",
-                    }
-                ]
-            }
-
-        );
-        console.log(uniqueTypes);
-
-
-        // const getUniqueProductTypes = function (obj) {
-
-        //     for (const product of obj.products) {
-        //         uniqueTypes.add(product.product_type);
-        //     }
-        //     console.log(uniqueTypes, typeof (uniqueTypes));
-        // }
-
-        // getUniqueProductTypes(obj);
-
-        const filtersMap = uniqueTypes.types.map(filterU => {
-            {
-                const filter = document.createElement('div');
-                filter.className = ("filter border border-danger");
-                filter.addEventListener('click', function(event){
-                    localStorage.setItem("filter"+`${filterU.index}`,`${filterU.id}`);
-                    console.log(filters);
-                });
-
-
-                filter.innerHTML =
-                    `<button value=${filterU.id}>
-                        ${filterU.id}
-                    </button>`;
-
-                return filter;
-            }
-        });
-        console.log(filtersMap);
-        filtersMap.forEach(filter => filtersContainer.appendChild(filter));
-    };
 
 
 async function App(fetched, filters, filtered) {
 
-
-
-
     await getProducts(fetched);
-    filterProducts(fetched, filters, filtered);
 
-    renderFilters(fetched);
+    const options = new Array();
 
-    
-    if(filters.length != 0){
-        renderCards(filtered);
-    }else{
-        renderCards(fetched);
-    }
-    
+    getOptions(fetched, options);
+    // filterProducts(fetched, filters, filtered);
 
 
-}
+    // if(filters.length != 0){
+    //     renderCards(filtered);
+    // }else{
+    //     renderCards(fetched);
+    // }
+
+};
 
 
 
