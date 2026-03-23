@@ -312,6 +312,15 @@ body::before {
   margin-bottom: 14px;
 }
 
+.ayah-transliteration {
+  font-size: 1.05rem;
+  color: #d4c4a0;
+  line-height: 1.8;
+  font-style: italic;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
 .ayah-translation {
   font-size: 0.95rem;
   color: var(--text-muted);
@@ -614,7 +623,7 @@ const ARABIC_NAMES = {
 const cache = new Map();
 let currentRevIndex = 0; // index into REVELATION_ORDER
 let activeFilter = 'all';
-let activeLangs = { arabic: true, bosnian: false, english: false, turkish: false };
+let activeLangs = { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
 
 function getCurrentEntry() { return REVELATION_ORDER[currentRevIndex]; }
 
@@ -671,14 +680,15 @@ function showLoading() {
 // Fetch surah (all 4 editions)
 async function fetchSurah(num) {
   if (cache.has(num)) return cache.get(num);
-  const resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.sahih,bs.mlivo,tr.diyanet`);
+  const resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.transliteration,en.sahih,bs.mlivo,tr.diyanet`);
   if (!resp.ok) throw new Error('Failed to fetch surah');
   const json = await resp.json();
   const data = {
     arabic: json.data[0],
-    english: json.data[1],
-    bosnian: json.data[2],
-    turkish: json.data[3]
+    transliteration: json.data[1],
+    english: json.data[2],
+    bosnian: json.data[3],
+    turkish: json.data[4]
   };
   cache.set(num, data);
   return data;
@@ -688,6 +698,7 @@ async function fetchSurah(num) {
 function langTogglesHTML() {
   const langs = [
     { key: 'arabic', flag: '\u{1F1F8}\u{1F1E6}', label: 'Arabic' },
+    { key: 'transliteration', flag: '\u{1F524}', label: 'Transliteration' },
     { key: 'bosnian', flag: '\u{1F1E7}\u{1F1E6}', label: 'Bosnian' },
     { key: 'english', flag: '\u{1F1EC}\u{1F1E7}', label: 'English' },
     { key: 'turkish', flag: '\u{1F1F9}\u{1F1F7}', label: 'Turkish' }
@@ -741,6 +752,7 @@ async function loadByRevIndex(idx) {
     }
 
     const ar = data.arabic.ayahs;
+    const tl = data.transliteration.ayahs;
     const en = data.english.ayahs;
     const bs = data.bosnian.ayahs;
     const tr = data.turkish.ayahs;
@@ -749,6 +761,7 @@ async function loadByRevIndex(idx) {
       html += `<div class="ayah">
         <div class="ayah-num-badge">${ar[i].numberInSurah}</div>
         <div class="ayah-arabic" ${activeLangs.arabic ? '' : 'style="display:none"'}>${ar[i].text}</div>
+        <div class="ayah-transliteration" data-lang="transliteration" ${activeLangs.transliteration ? '' : 'style="display:none"'}>${tl[i].text}</div>
         <div class="ayah-translation" data-lang="bosnian" ${activeLangs.bosnian ? '' : 'style="display:none"'}><span class="lang-label">Bosnian</span>${bs[i].text}</div>
         <div class="ayah-translation" data-lang="english" ${activeLangs.english ? '' : 'style="display:none"'}><span class="lang-label">English</span>${en[i].text}</div>
         <div class="ayah-translation" data-lang="turkish" ${activeLangs.turkish ? '' : 'style="display:none"'}><span class="lang-label">Turkish</span>${tr[i].text}</div>
@@ -792,6 +805,8 @@ function bindLangToggles() {
       // Toggle visibility
       if (lang === 'arabic') {
         document.querySelectorAll('.ayah-arabic').forEach(el => el.style.display = activeLangs.arabic ? '' : 'none');
+      } else if (lang === 'transliteration') {
+        document.querySelectorAll('.ayah-transliteration').forEach(el => el.style.display = activeLangs.transliteration ? '' : 'none');
       } else {
         document.querySelectorAll(`.ayah-translation[data-lang="${lang}"]`).forEach(el => el.style.display = activeLangs[lang] ? '' : 'none');
       }
