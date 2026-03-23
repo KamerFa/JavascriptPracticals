@@ -450,6 +450,50 @@ body::before {
   transition: opacity 0.2s;
 }
 .scroll-top.visible { display: flex; }
+
+/* Bookmark pin */
+.ayah-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 3px 8px;
+  margin-left: 8px;
+  transition: all 0.15s;
+  vertical-align: middle;
+}
+.ayah-pin:hover { border-color: var(--gold-dim); color: var(--gold); }
+.ayah-pin.pinned {
+  border-color: var(--gold-dim);
+  background: rgba(201,168,76,0.12);
+  color: var(--gold);
+}
+
+.resume-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: calc(100% - 32px);
+  margin: 8px 16px;
+  padding: 8px 0;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  color: var(--gold);
+  font-family: 'Lora', serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.resume-btn:hover { background: rgba(201,168,76,0.18); }
+.resume-btn .pin-icon { font-size: 0.95rem; }
 </style>
 </head>
 <body>
@@ -472,6 +516,7 @@ body::before {
         <button class="filter-btn" data-filter="medinan">Medinan</button>
       </div>
     </div>
+    <div id="resumeContainer"></div>
     <div class="surah-list" id="surahList"></div>
   </aside>
 
@@ -628,13 +673,54 @@ const saved = JSON.parse(localStorage.getItem('quran-prefs') || 'null');
 let currentRevIndex = saved?.revIndex ?? 0;
 let activeFilter = saved?.filter ?? 'all';
 let activeLangs = saved?.langs ?? { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
+let pinnedAyah = saved?.pinned ?? null; // { surahNum, ayahNum, revIndex, surahName }
 
 function savePrefs() {
   localStorage.setItem('quran-prefs', JSON.stringify({
     revIndex: currentRevIndex,
     filter: activeFilter,
-    langs: activeLangs
+    langs: activeLangs,
+    pinned: pinnedAyah
   }));
+}
+
+function togglePin(surahNum, ayahNum, revIndex, surahName) {
+  if (pinnedAyah && pinnedAyah.surahNum === surahNum && pinnedAyah.ayahNum === ayahNum) {
+    pinnedAyah = null;
+  } else {
+    pinnedAyah = { surahNum, ayahNum, revIndex, surahName };
+  }
+  savePrefs();
+  updatePinButtons();
+  renderResumeBtn();
+}
+
+function updatePinButtons() {
+  document.querySelectorAll('.ayah-pin').forEach(btn => {
+    const s = +btn.dataset.surah, a = +btn.dataset.ayah;
+    const isPinned = pinnedAyah && pinnedAyah.surahNum === s && pinnedAyah.ayahNum === a;
+    btn.classList.toggle('pinned', isPinned);
+    btn.innerHTML = isPinned ? '📌 Pinned' : '📌 Pin here';
+  });
+}
+
+function renderResumeBtn() {
+  const container = document.getElementById('resumeContainer');
+  if (!pinnedAyah) { container.innerHTML = ''; return; }
+  container.innerHTML = `
+    <button class="resume-btn" onclick="resumeFromPin()">
+      <span class="pin-icon">📌</span>
+      Resume — ${pinnedAyah.surahName} : ${pinnedAyah.ayahNum}
+    </button>`;
+}
+
+async function resumeFromPin() {
+  if (!pinnedAyah) return;
+  await loadByRevIndex(pinnedAyah.revIndex);
+  setTimeout(() => {
+    const el = document.querySelector(`.ayah-pin[data-surah="${pinnedAyah.surahNum}"][data-ayah="${pinnedAyah.ayahNum}"]`);
+    if (el) el.closest('.ayah').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
 }
 
 function getCurrentEntry() { return REVELATION_ORDER[currentRevIndex]; }
@@ -771,8 +857,10 @@ async function loadByRevIndex(idx) {
     const tr = data.turkish.ayahs;
 
     for (let i = 0; i < ar.length; i++) {
+      const isPinned = pinnedAyah && pinnedAyah.surahNum === surahNum && pinnedAyah.ayahNum === ar[i].numberInSurah;
       html += `<div class="ayah">
         <div class="ayah-num-badge">${ar[i].numberInSurah}</div>
+        <button class="ayah-pin ${isPinned ? 'pinned' : ''}" data-surah="${surahNum}" data-ayah="${ar[i].numberInSurah}" onclick="togglePin(${surahNum},${ar[i].numberInSurah},${idx},'${name.replace(/'/g, "\\'")}')">${isPinned ? '📌 Pinned' : '📌 Pin here'}</button>
         <div class="ayah-arabic" ${activeLangs.arabic ? '' : 'style="display:none"'}>${ar[i].text}</div>
         <div class="ayah-transliteration" data-lang="transliteration" ${activeLangs.transliteration ? '' : 'style="display:none"'}>${tl[i].text}</div>
         <div class="ayah-translation" data-lang="bosnian" ${activeLangs.bosnian ? '' : 'style="display:none"'}><span class="lang-label">Bosnian</span>${bs[i].text}</div>
@@ -860,6 +948,7 @@ if (activeFilter !== 'all') {
   });
 }
 buildSidebar();
+renderResumeBtn();
 loadByRevIndex(currentRevIndex);
 </script>
 </body>
