@@ -621,9 +621,20 @@ const ARABIC_NAMES = {
 };
 
 const cache = new Map();
-let currentRevIndex = 0; // index into REVELATION_ORDER
-let activeFilter = 'all';
-let activeLangs = { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
+
+// Restore from localStorage
+const saved = JSON.parse(localStorage.getItem('quran-prefs') || 'null');
+let currentRevIndex = saved?.revIndex ?? 0;
+let activeFilter = saved?.filter ?? 'all';
+let activeLangs = saved?.langs ?? { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
+
+function savePrefs() {
+  localStorage.setItem('quran-prefs', JSON.stringify({
+    revIndex: currentRevIndex,
+    filter: activeFilter,
+    langs: activeLangs
+  }));
+}
 
 function getCurrentEntry() { return REVELATION_ORDER[currentRevIndex]; }
 
@@ -711,6 +722,7 @@ function langTogglesHTML() {
 // Render surah
 async function loadByRevIndex(idx) {
   currentRevIndex = idx;
+  savePrefs();
   const entry = REVELATION_ORDER[idx];
   const [revPos, surahNum, name, type, notes] = entry;
   const nameAr = ARABIC_NAMES[surahNum];
@@ -800,6 +812,7 @@ function bindLangToggles() {
       // Don't allow disabling the last active language
       if (activeLangs[lang] && activeCount <= 1) return;
       activeLangs[lang] = !activeLangs[lang];
+      savePrefs();
       btn.classList.toggle('active', activeLangs[lang]);
 
       // Toggle visibility
@@ -823,6 +836,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeFilter = btn.dataset.filter;
+    savePrefs();
     buildSidebar();
   });
 });
@@ -838,9 +852,14 @@ window.addEventListener('scroll', () => {
   document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
 });
 
-// Init — start with first revealed surah (Al-Alaq)
+// Init — restore saved state or start at first revelation
+if (activeFilter !== 'all') {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === activeFilter);
+  });
+}
 buildSidebar();
-loadByRevIndex(0);
+loadByRevIndex(currentRevIndex);
 </script>
 </body>
 </html>
