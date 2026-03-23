@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quran — Arabic &amp; Bosnian</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0b08;
+  --bg-card: #1a1611;
+  --bg-sidebar: #141210;
+  --text: #e8dcc8;
+  --text-muted: #9a8e7a;
+  --gold: #c9a84c;
+  --gold-dim: #8a7335;
+  --green: #5a9e6f;
+  --border: #2a2520;
+  --accent: #c9a84c;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Layout */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 320px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h1 {
+  font-family: 'Amiri', serif;
+  color: var(--gold);
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.search-box {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  outline: none;
+}
+.search-box:focus { border-color: var(--gold-dim); }
+.search-box::placeholder { color: var(--text-muted); }
+
+.surah-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.surah-list::-webkit-scrollbar { width: 6px; }
+.surah-list::-webkit-scrollbar-track { background: transparent; }
+.surah-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.surah-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+.surah-item:hover { background: rgba(201,168,76,0.06); }
+.surah-item.active {
+  background: rgba(201,168,76,0.1);
+  border-left-color: var(--gold);
+}
+
+.surah-num {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.surah-info { flex: 1; min-width: 0; }
+.surah-name-ar {
+  font-family: 'Amiri', serif;
+  font-size: 1.05rem;
+  color: var(--text);
+  direction: rtl;
+}
+.surah-name-en {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.surah-type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.surah-type-dot.meccan { background: var(--gold); }
+.surah-type-dot.medinan { background: var(--green); }
+
+/* Main content */
+.main {
+  flex: 1;
+  margin-left: 320px;
+  padding: 32px 24px;
+  max-width: 900px;
+}
+
+/* Surah header */
+.surah-header {
+  text-align: center;
+  padding: 32px 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.surah-header-ar {
+  font-family: 'Amiri', serif;
+  font-size: 2.8rem;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.surah-header-en {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.surah-meta {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.surah-badge {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.surah-badge.meccan { background: rgba(201,168,76,0.15); color: var(--gold); }
+.surah-badge.medinan { background: rgba(90,158,111,0.15); color: var(--green); }
+
+/* Bismillah */
+.bismillah {
+  text-align: center;
+  font-family: 'Amiri', serif;
+  font-size: 2rem;
+  color: var(--gold);
+  padding: 24px 0;
+  opacity: 0.85;
+}
+
+/* Ayah */
+.ayah {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ayah:last-child { border-bottom: none; }
+
+.ayah-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  font-size: 0.8rem;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.ayah-arabic {
+  font-family: 'Amiri', serif;
+  font-size: 1.75rem;
+  line-height: 2.2;
+  direction: rtl;
+  text-align: right;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.ayah-bosnian {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+/* Navigation */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 32px 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.nav-btn {
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.nav-btn:hover { border-color: var(--gold-dim); background: rgba(201,168,76,0.06); }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-btn:disabled:hover { border-color: var(--border); background: var(--bg-card); }
+
+/* Loading skeleton */
+.skeleton {
+  padding: 20px 0;
+}
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, #221e18 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.skeleton-line.wide { width: 100%; height: 28px; }
+.skeleton-line.med { width: 75%; }
+.skeleton-line.short { width: 50%; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Mobile */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.mobile-header h1 {
+  font-family: 'Amiri', serif;
+  color: var(--gold);
+  font-size: 1.2rem;
+}
+.menu-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .mobile-header { display: flex; }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .main {
+    margin-left: 0;
+    padding: 72px 16px 32px;
+  }
+}
+
+/* Scroll to top */
+.scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  transition: opacity 0.2s;
+}
+.scroll-top.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="mobile-header">
+  <h1>القرآن الكريم</h1>
+  <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+</div>
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>القرآن الكريم</h1>
+      <input type="text" class="search-box" id="search" placeholder="Search surah…">
+    </div>
+    <div class="surah-list" id="surahList"></div>
+  </aside>
+
+  <main class="main" id="main">
+    <div id="content"></div>
+  </main>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+const SURAHS = [
+  {number:1,name:"Al-Faatiha",nameAr:"الفاتحة",ayahs:7,type:"Meccan"},
+  {number:2,name:"Al-Baqara",nameAr:"البقرة",ayahs:286,type:"Medinan"},
+  {number:3,name:"Aal-i-Imraan",nameAr:"آل عمران",ayahs:200,type:"Medinan"},
+  {number:4,name:"An-Nisaa",nameAr:"النساء",ayahs:176,type:"Medinan"},
+  {number:5,name:"Al-Maaida",nameAr:"المائدة",ayahs:120,type:"Medinan"},
+  {number:6,name:"Al-An'aam",nameAr:"الأنعام",ayahs:165,type:"Meccan"},
+  {number:7,name:"Al-A'raaf",nameAr:"الأعراف",ayahs:206,type:"Meccan"},
+  {number:8,name:"Al-Anfaal",nameAr:"الأنفال",ayahs:75,type:"Medinan"},
+  {number:9,name:"At-Tawba",nameAr:"التوبة",ayahs:129,type:"Medinan"},
+  {number:10,name:"Yunus",nameAr:"يونس",ayahs:109,type:"Meccan"},
+  {number:11,name:"Hud",nameAr:"هود",ayahs:123,type:"Meccan"},
+  {number:12,name:"Yusuf",nameAr:"يوسف",ayahs:111,type:"Meccan"},
+  {number:13,name:"Ar-Ra'd",nameAr:"الرعد",ayahs:43,type:"Medinan"},
+  {number:14,name:"Ibrahim",nameAr:"إبراهيم",ayahs:52,type:"Meccan"},
+  {number:15,name:"Al-Hijr",nameAr:"الحجر",ayahs:99,type:"Meccan"},
+  {number:16,name:"An-Nahl",nameAr:"النحل",ayahs:128,type:"Meccan"},
+  {number:17,name:"Al-Israa",nameAr:"الإسراء",ayahs:111,type:"Meccan"},
+  {number:18,name:"Al-Kahf",nameAr:"الكهف",ayahs:110,type:"Meccan"},
+  {number:19,name:"Maryam",nameAr:"مريم",ayahs:98,type:"Meccan"},
+  {number:20,name:"Taa-Haa",nameAr:"طه",ayahs:135,type:"Meccan"},
+  {number:21,name:"Al-Anbiyaa",nameAr:"الأنبياء",ayahs:112,type:"Meccan"},
+  {number:22,name:"Al-Hajj",nameAr:"الحج",ayahs:78,type:"Medinan"},
+  {number:23,name:"Al-Muminoon",nameAr:"المؤمنون",ayahs:118,type:"Meccan"},
+  {number:24,name:"An-Noor",nameAr:"النور",ayahs:64,type:"Medinan"},
+  {number:25,name:"Al-Furqaan",nameAr:"الفرقان",ayahs:77,type:"Meccan"},
+  {number:26,name:"Ash-Shu'araa",nameAr:"الشعراء",ayahs:227,type:"Meccan"},
+  {number:27,name:"An-Naml",nameAr:"النمل",ayahs:93,type:"Meccan"},
+  {number:28,name:"Al-Qasas",nameAr:"القصص",ayahs:88,type:"Meccan"},
+  {number:29,name:"Al-Ankaboot",nameAr:"العنكبوت",ayahs:69,type:"Meccan"},
+  {number:30,name:"Ar-Room",nameAr:"الروم",ayahs:60,type:"Meccan"},
+  {number:31,name:"Luqman",nameAr:"لقمان",ayahs:34,type:"Meccan"},
+  {number:32,name:"As-Sajda",nameAr:"السجدة",ayahs:30,type:"Meccan"},
+  {number:33,name:"Al-Ahzaab",nameAr:"الأحزاب",ayahs:73,type:"Medinan"},
+  {number:34,name:"Saba",nameAr:"سبأ",ayahs:54,type:"Meccan"},
+  {number:35,name:"Faatir",nameAr:"فاطر",ayahs:45,type:"Meccan"},
+  {number:36,name:"Yaseen",nameAr:"يس",ayahs:83,type:"Meccan"},
+  {number:37,name:"As-Saaffaat",nameAr:"الصافات",ayahs:182,type:"Meccan"},
+  {number:38,name:"Saad",nameAr:"ص",ayahs:88,type:"Meccan"},
+  {number:39,name:"Az-Zumar",nameAr:"الزمر",ayahs:75,type:"Meccan"},
+  {number:40,name:"Al-Ghaafir",nameAr:"غافر",ayahs:85,type:"Meccan"},
+  {number:41,name:"Fussilat",nameAr:"فصلت",ayahs:54,type:"Meccan"},
+  {number:42,name:"Ash-Shura",nameAr:"الشورى",ayahs:53,type:"Meccan"},
+  {number:43,name:"Az-Zukhruf",nameAr:"الزخرف",ayahs:89,type:"Meccan"},
+  {number:44,name:"Ad-Dukhaan",nameAr:"الدخان",ayahs:59,type:"Meccan"},
+  {number:45,name:"Al-Jaathiya",nameAr:"الجاثية",ayahs:37,type:"Meccan"},
+  {number:46,name:"Al-Ahqaf",nameAr:"الأحقاف",ayahs:35,type:"Meccan"},
+  {number:47,name:"Muhammad",nameAr:"محمد",ayahs:38,type:"Medinan"},
+  {number:48,name:"Al-Fath",nameAr:"الفتح",ayahs:29,type:"Medinan"},
+  {number:49,name:"Al-Hujuraat",nameAr:"الحجرات",ayahs:18,type:"Medinan"},
+  {number:50,name:"Qaaf",nameAr:"ق",ayahs:45,type:"Meccan"},
+  {number:51,name:"Adh-Dhaariyat",nameAr:"الذاريات",ayahs:60,type:"Meccan"},
+  {number:52,name:"At-Tur",nameAr:"الطور",ayahs:49,type:"Meccan"},
+  {number:53,name:"An-Najm",nameAr:"النجم",ayahs:62,type:"Meccan"},
+  {number:54,name:"Al-Qamar",nameAr:"القمر",ayahs:55,type:"Meccan"},
+  {number:55,name:"Ar-Rahmaan",nameAr:"الرحمن",ayahs:78,type:"Medinan"},
+  {number:56,name:"Al-Waaqia",nameAr:"الواقعة",ayahs:96,type:"Meccan"},
+  {number:57,name:"Al-Hadid",nameAr:"الحديد",ayahs:29,type:"Medinan"},
+  {number:58,name:"Al-Mujaadila",nameAr:"المجادلة",ayahs:22,type:"Medinan"},
+  {number:59,name:"Al-Hashr",nameAr:"الحشر",ayahs:24,type:"Medinan"},
+  {number:60,name:"Al-Mumtahana",nameAr:"الممتحنة",ayahs:13,type:"Medinan"},
+  {number:61,name:"As-Saff",nameAr:"الصف",ayahs:14,type:"Medinan"},
+  {number:62,name:"Al-Jumu'a",nameAr:"الجمعة",ayahs:11,type:"Medinan"},
+  {number:63,name:"Al-Munaafiqoon",nameAr:"المنافقون",ayahs:11,type:"Medinan"},
+  {number:64,name:"At-Taghaabun",nameAr:"التغابن",ayahs:18,type:"Medinan"},
+  {number:65,name:"At-Talaaq",nameAr:"الطلاق",ayahs:12,type:"Medinan"},
+  {number:66,name:"At-Tahrim",nameAr:"التحريم",ayahs:12,type:"Medinan"},
+  {number:67,name:"Al-Mulk",nameAr:"الملك",ayahs:30,type:"Meccan"},
+  {number:68,name:"Al-Qalam",nameAr:"القلم",ayahs:52,type:"Meccan"},
+  {number:69,name:"Al-Haaqqa",nameAr:"الحاقة",ayahs:52,type:"Meccan"},
+  {number:70,name:"Al-Ma'aarij",nameAr:"المعارج",ayahs:44,type:"Meccan"},
+  {number:71,name:"Nooh",nameAr:"نوح",ayahs:28,type:"Meccan"},
+  {number:72,name:"Al-Jinn",nameAr:"الجن",ayahs:28,type:"Meccan"},
+  {number:73,name:"Al-Muzzammil",nameAr:"المزمل",ayahs:20,type:"Meccan"},
+  {number:74,name:"Al-Muddaththir",nameAr:"المدثر",ayahs:56,type:"Meccan"},
+  {number:75,name:"Al-Qiyaama",nameAr:"القيامة",ayahs:40,type:"Meccan"},
+  {number:76,name:"Al-Insaan",nameAr:"الإنسان",ayahs:31,type:"Medinan"},
+  {number:77,name:"Al-Mursalaat",nameAr:"المرسلات",ayahs:50,type:"Meccan"},
+  {number:78,name:"An-Naba",nameAr:"النبأ",ayahs:40,type:"Meccan"},
+  {number:79,name:"An-Naazi'aat",nameAr:"النازعات",ayahs:46,type:"Meccan"},
+  {number:80,name:"Abasa",nameAr:"عبس",ayahs:42,type:"Meccan"},
+  {number:81,name:"At-Takwir",nameAr:"التكوير",ayahs:29,type:"Meccan"},
+  {number:82,name:"Al-Infitaar",nameAr:"الانفطار",ayahs:19,type:"Meccan"},
+  {number:83,name:"Al-Mutaffifin",nameAr:"المطففين",ayahs:36,type:"Meccan"},
+  {number:84,name:"Al-Inshiqaaq",nameAr:"الانشقاق",ayahs:25,type:"Meccan"},
+  {number:85,name:"Al-Burooj",nameAr:"البروج",ayahs:22,type:"Meccan"},
+  {number:86,name:"At-Taariq",nameAr:"الطارق",ayahs:17,type:"Meccan"},
+  {number:87,name:"Al-A'laa",nameAr:"الأعلى",ayahs:19,type:"Meccan"},
+  {number:88,name:"Al-Ghaashiya",nameAr:"الغاشية",ayahs:26,type:"Meccan"},
+  {number:89,name:"Al-Fajr",nameAr:"الفجر",ayahs:30,type:"Meccan"},
+  {number:90,name:"Al-Balad",nameAr:"البلد",ayahs:20,type:"Meccan"},
+  {number:91,name:"Ash-Shams",nameAr:"الشمس",ayahs:15,type:"Meccan"},
+  {number:92,name:"Al-Lail",nameAr:"الليل",ayahs:21,type:"Meccan"},
+  {number:93,name:"Ad-Dhuhaa",nameAr:"الضحى",ayahs:11,type:"Meccan"},
+  {number:94,name:"Ash-Sharh",nameAr:"الشرح",ayahs:8,type:"Meccan"},
+  {number:95,name:"At-Tin",nameAr:"التين",ayahs:8,type:"Meccan"},
+  {number:96,name:"Al-Alaq",nameAr:"العلق",ayahs:19,type:"Meccan"},
+  {number:97,name:"Al-Qadr",nameAr:"القدر",ayahs:5,type:"Meccan"},
+  {number:98,name:"Al-Bayyina",nameAr:"البينة",ayahs:8,type:"Medinan"},
+  {number:99,name:"Az-Zalzala",nameAr:"الزلزلة",ayahs:8,type:"Medinan"},
+  {number:100,name:"Al-Aadiyaat",nameAr:"العاديات",ayahs:11,type:"Meccan"},
+  {number:101,name:"Al-Qaari'a",nameAr:"القارعة",ayahs:11,type:"Meccan"},
+  {number:102,name:"At-Takaathur",nameAr:"التكاثر",ayahs:8,type:"Meccan"},
+  {number:103,name:"Al-Asr",nameAr:"العصر",ayahs:3,type:"Meccan"},
+  {number:104,name:"Al-Humaza",nameAr:"الهمزة",ayahs:9,type:"Meccan"},
+  {number:105,name:"Al-Fil",nameAr:"الفيل",ayahs:5,type:"Meccan"},
+  {number:106,name:"Quraish",nameAr:"قريش",ayahs:4,type:"Meccan"},
+  {number:107,name:"Al-Maa'un",nameAr:"الماعون",ayahs:7,type:"Meccan"},
+  {number:108,name:"Al-Kawthar",nameAr:"الكوثر",ayahs:3,type:"Meccan"},
+  {number:109,name:"Al-Kaafiroon",nameAr:"الكافرون",ayahs:6,type:"Meccan"},
+  {number:110,name:"An-Nasr",nameAr:"النصر",ayahs:3,type:"Medinan"},
+  {number:111,name:"Al-Masad",nameAr:"المسد",ayahs:5,type:"Meccan"},
+  {number:112,name:"Al-Ikhlaas",nameAr:"الإخلاص",ayahs:4,type:"Meccan"},
+  {number:113,name:"Al-Falaq",nameAr:"الفلق",ayahs:5,type:"Meccan"},
+  {number:114,name:"An-Naas",nameAr:"الناس",ayahs:5,type:"Meccan"}
+];
+
+const cache = new Map();
+let currentSurah = 1;
+
+// Build sidebar
+function buildSidebar(filter = '') {
+  const list = document.getElementById('surahList');
+  list.innerHTML = '';
+  const q = filter.toLowerCase();
+  SURAHS.forEach(s => {
+    if (q && !s.name.toLowerCase().includes(q) && !s.nameAr.includes(q) && !String(s.number).includes(q)) return;
+    const div = document.createElement('div');
+    div.className = 'surah-item' + (s.number === currentSurah ? ' active' : '');
+    div.innerHTML = `
+      <span class="surah-num">${s.number}</span>
+      <div class="surah-info">
+        <div class="surah-name-ar">${s.nameAr}</div>
+        <div class="surah-name-en">${s.name}</div>
+      </div>
+      <span class="surah-type-dot ${s.type.toLowerCase()}"></span>
+    `;
+    div.onclick = () => loadSurah(s.number);
+    list.appendChild(div);
+  });
+}
+
+// Loading skeleton
+function showLoading() {
+  const content = document.getElementById('content');
+  let html = '<div class="skeleton">';
+  for (let i = 0; i < 8; i++) {
+    const cls = i % 3 === 0 ? 'wide' : i % 3 === 1 ? 'med' : 'short';
+    html += `<div class="skeleton-line ${cls}"></div>`;
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// Fetch surah
+async function fetchSurah(num) {
+  if (cache.has(num)) return cache.get(num);
+  const resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,bs.mlivo`);
+  if (!resp.ok) throw new Error('Failed to fetch surah');
+  const json = await resp.json();
+  const data = { arabic: json.data[0], bosnian: json.data[1] };
+  cache.set(num, data);
+  return data;
+}
+
+// Render surah
+async function loadSurah(num) {
+  currentSurah = num;
+  const s = SURAHS[num - 1];
+  buildSidebar(document.getElementById('search').value);
+  showLoading();
+  window.scrollTo({ top: 0 });
+
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+
+  try {
+    const data = await fetchSurah(num);
+    const content = document.getElementById('content');
+    const typeClass = s.type.toLowerCase();
+
+    let html = `
+      <div class="surah-header">
+        <div class="surah-header-ar">${s.nameAr}</div>
+        <div class="surah-header-en">${s.name}</div>
+        <div class="surah-meta">
+          <span class="surah-badge ${typeClass}">${s.type}</span>
+          <span>Surah ${s.number}</span>
+          <span>${s.ayahs} ayahs</span>
+        </div>
+      </div>
+    `;
+
+    // Bismillah (skip for At-Tawba and Al-Faatiha whose first ayah IS the bismillah)
+    if (num !== 9 && num !== 1) {
+      html += '<div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
+    }
+
+    const arAyahs = data.arabic.ayahs;
+    const bsAyahs = data.bosnian.ayahs;
+
+    for (let i = 0; i < arAyahs.length; i++) {
+      html += `
+        <div class="ayah">
+          <div class="ayah-num-badge">${arAyahs[i].numberInSurah}</div>
+          <div class="ayah-arabic">${arAyahs[i].text}</div>
+          <div class="ayah-bosnian">${bsAyahs[i].text}</div>
+        </div>
+      `;
+    }
+
+    // Nav buttons
+    const prev = num > 1 ? num - 1 : null;
+    const next = num < 114 ? num + 1 : null;
+    html += `
+      <div class="nav-buttons">
+        <button class="nav-btn" ${prev ? `onclick="loadSurah(${prev})"` : 'disabled'}>← ${prev ? SURAHS[prev-1].name : ''}</button>
+        <button class="nav-btn" ${next ? `onclick="loadSurah(${next})"` : 'disabled'}>${next ? SURAHS[next-1].name : ''} →</button>
+      </div>
+    `;
+
+    content.innerHTML = html;
+  } catch (err) {
+    document.getElementById('content').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
+        <p style="font-size:1.2rem;margin-bottom:12px">Failed to load surah</p>
+        <p style="font-size:0.85rem">${err.message}</p>
+        <button class="nav-btn" style="margin-top:20px" onclick="loadSurah(${num})">Retry</button>
+      </div>
+    `;
+  }
+}
+
+// Search
+document.getElementById('search').addEventListener('input', e => buildSidebar(e.target.value));
+
+// Mobile sidebar toggle
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+});
+
+// Init
+buildSidebar();
+loadSurah(1);
+</script>
+</body>
+</html>
