@@ -865,6 +865,7 @@ function savePrefs() {
     seerahOpen,
     seerahLang
   }));
+  syncPrefsToServer();
 }
 
 function togglePin(surahNum, ayahNum, revIndex, surahName) {
@@ -874,6 +875,7 @@ function togglePin(surahNum, ayahNum, revIndex, surahName) {
     pinnedAyah = { surahNum, ayahNum, revIndex, surahName };
   }
   savePrefs();
+  syncBookmarkToServer();
   updatePinButtons();
   renderResumeBtn();
 }
@@ -958,10 +960,20 @@ function showLoading() {
   content.innerHTML = html;
 }
 
-// Fetch surah (all 4 editions)
+// API base — uses Go backend when served from it, falls back to alquran.cloud
+const API_BASE = '/api';
+
+// Fetch surah (all 5 editions) via Go proxy or direct
 async function fetchSurah(num) {
   if (cache.has(num)) return cache.get(num);
-  const resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.transliteration,en.sahih,bs.mlivo,tr.diyanet`);
+
+  let resp;
+  try {
+    resp = await fetch(`${API_BASE}/surah/${num}`);
+  } catch {
+    // Fallback to direct API if backend is unreachable
+    resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.transliteration,en.sahih,bs.mlivo,tr.diyanet`);
+  }
   if (!resp.ok) throw new Error('Failed to fetch surah');
   const json = await resp.json();
   const data = {
@@ -973,6 +985,71 @@ async function fetchSurah(num) {
   };
   cache.set(num, data);
   return data;
+}
+
+// Sync preferences to server (fire-and-forget)
+function syncPrefsToServer() {
+  const prefs = {
+    revIndex: currentRevIndex,
+    filter: activeFilter,
+    langs: activeLangs,
+    seerahOpen,
+    seerahLang
+  };
+  fetch(`${API_BASE}/prefs`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(prefs)
+  }).catch(() => {}); // silent fail
+}
+
+// Sync bookmark to server
+function syncBookmarkToServer() {
+  if (pinnedAyah) {
+    fetch(`${API_BASE}/bookmark`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(pinnedAyah)
+    }).catch(() => {});
+  } else {
+    fetch(`${API_BASE}/bookmark`, {
+      method: 'DELETE',
+      credentials: 'include'
+    }).catch(() => {});
+  }
+}
+
+// Load prefs from server on startup (merges with localStorage)
+async function loadServerPrefs() {
+  try {
+    const resp = await fetch(`${API_BASE}/prefs`, { credentials: 'include' });
+    if (resp.ok) {
+      const p = await resp.json();
+      if (p && p.revIndex !== undefined) {
+        currentRevIndex = p.revIndex;
+        activeFilter = p.filter || 'all';
+        activeLangs = p.langs || activeLangs;
+        seerahOpen = p.seerahOpen || false;
+        seerahLang = p.seerahLang || 'en';
+        savePrefs();
+      }
+    }
+  } catch {
+    // Server not available, use localStorage
+  }
+
+  try {
+    const resp = await fetch(`${API_BASE}/bookmark`, { credentials: 'include' });
+    if (resp.ok) {
+      const b = await resp.json();
+      if (b && b.surahNum) {
+        pinnedAyah = b;
+        savePrefs();
+      }
+    }
+  } catch {}
 }
 
 // Language toggle HTML
@@ -1182,15 +1259,19 @@ window.addEventListener('scroll', () => {
   document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
 });
 
-// Init — restore saved state or start at first revelation
-if (activeFilter !== 'all') {
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.filter === activeFilter);
-  });
-}
-buildSidebar();
-renderResumeBtn();
-loadByRevIndex(currentRevIndex);
+// Init — try server prefs first, then fall back to localStorage
+(async function init() {
+  await loadServerPrefs();
+
+  if (activeFilter !== 'all') {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === activeFilter);
+    });
+  }
+  buildSidebar();
+  renderResumeBtn();
+  loadByRevIndex(currentRevIndex);
+})();
 </script>
 </body>
 </html>
