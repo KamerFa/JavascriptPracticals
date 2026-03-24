@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quran — Chronological Order</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%230d0b08'/><path d='M38 12a20 20 0 1 0 0 40 24 24 0 0 1 0-40z' fill='%23c9a84c'/><polygon points='22,24 23.5,29 28.5,29 24.5,32 26,37 22,34 18,37 19.5,32 15.5,29 20.5,29' fill='%23c9a84c'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lora:wght@400;600;700&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d0b08;
+  --bg-card: #1a1611;
+  --bg-sidebar: #141210;
+  --text: #e8dcc8;
+  --text-muted: #9a8e7a;
+  --gold: #c9a84c;
+  --gold-dim: #8a7335;
+  --green: #5a9e6f;
+  --border: #2a2520;
+  --accent: #c9a84c;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Layout */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 320px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h1 {
+  font-family: 'Amiri', serif;
+  color: var(--gold);
+  font-size: 1.5rem;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.search-box {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  outline: none;
+}
+.search-box:focus { border-color: var(--gold-dim); }
+.search-box::placeholder { color: var(--text-muted); }
+
+.surah-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.surah-list::-webkit-scrollbar { width: 6px; }
+.surah-list::-webkit-scrollbar-track { background: transparent; }
+.surah-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.surah-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+.surah-item:hover { background: rgba(201,168,76,0.06); }
+.surah-item.active {
+  background: rgba(201,168,76,0.1);
+  border-left-color: var(--gold);
+}
+
+.surah-num {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.surah-info { flex: 1; min-width: 0; }
+.surah-name-ar {
+  font-family: 'Amiri', serif;
+  font-size: 1.05rem;
+  color: var(--text);
+  direction: rtl;
+}
+.surah-name-en {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.surah-mushaf-num {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+/* Filter buttons */
+.filter-row {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px 4px;
+}
+.filter-btn {
+  flex: 1;
+  padding: 5px 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn.active {
+  background: rgba(201,168,76,0.12);
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+
+.surah-type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.surah-type-dot.meccan { background: var(--gold); }
+.surah-type-dot.medinan { background: var(--green); }
+
+/* Main content */
+.main {
+  flex: 1;
+  margin-left: 320px;
+  padding: 32px 24px;
+  max-width: 900px;
+}
+
+/* Surah header */
+.surah-header {
+  text-align: center;
+  padding: 32px 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.surah-header-ar {
+  font-family: 'Amiri', serif;
+  font-size: 2.8rem;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.surah-header-en {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.surah-meta {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.surah-badge {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.surah-badge.meccan { background: rgba(201,168,76,0.15); color: var(--gold); }
+.surah-badge.medinan { background: rgba(90,158,111,0.15); color: var(--green); }
+
+.surah-header-label {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+/* Notes banner */
+.notes-banner {
+  background: rgba(201,168,76,0.06);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Seerah panel */
+.seerah-panel {
+  background: rgba(201,168,76,0.04);
+  border: 1px solid rgba(201,168,76,0.12);
+  border-left: 3px solid var(--gold-dim);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.seerah-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.seerah-toggle:hover { background: rgba(201,168,76,0.06); }
+.seerah-toggle-icon {
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  transition: transform 0.25s;
+}
+.seerah-toggle-icon.rotated { transform: rotate(90deg); }
+.seerah-toggle-title {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.seerah-toggle-period {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.seerah-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.seerah-body.expanded { max-height: 2000px; }
+.seerah-content {
+  padding: 0 16px 16px;
+}
+.seerah-period-title {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.8rem;
+  color: var(--gold-dim);
+  margin-bottom: 6px;
+  letter-spacing: 0.06em;
+}
+.seerah-period-years {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.seerah-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.seerah-text.period-summary {
+  color: var(--text-muted);
+  font-style: italic;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.seerah-events {
+  list-style: none;
+  margin-bottom: 12px;
+}
+.seerah-events li {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 3px 0 3px 16px;
+  position: relative;
+}
+.seerah-events li::before {
+  content: '\2726';
+  position: absolute;
+  left: 0;
+  color: var(--gold-dim);
+}
+.seerah-ref {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 4px;
+  padding: 4px 10px;
+  transition: all 0.15s;
+}
+.seerah-ref:hover {
+  background: rgba(201,168,76,0.08);
+  color: var(--gold);
+}
+.seerah-lang-btns {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.seerah-lang-btn {
+  padding: 2px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+}
+.seerah-lang-btn.active {
+  background: rgba(201,168,76,0.1);
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+
+/* Language toggles */
+.lang-toggles {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.lang-pill {
+  padding: 6px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.lang-pill.active {
+  background: rgba(201,168,76,0.12);
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+.lang-pill:hover { border-color: var(--gold-dim); }
+
+/* Bismillah */
+.bismillah {
+  text-align: center;
+  font-family: 'Amiri', serif;
+  font-size: 2rem;
+  color: var(--gold);
+  padding: 24px 0;
+  opacity: 0.85;
+}
+
+/* Ayah */
+.ayah {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ayah:last-child { border-bottom: none; }
+
+.ayah-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  font-size: 0.8rem;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.ayah-arabic {
+  font-family: 'Amiri', serif;
+  font-size: 1.75rem;
+  line-height: 2.2;
+  direction: rtl;
+  text-align: right;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.ayah-transliteration {
+  font-size: 1.05rem;
+  color: #d4c4a0;
+  line-height: 1.8;
+  font-style: italic;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.ayah-translation {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+  margin-top: 8px;
+}
+.ayah-translation .lang-label {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.7rem;
+  color: var(--gold-dim);
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Navigation */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 32px 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.nav-btn {
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.nav-btn:hover { border-color: var(--gold-dim); background: rgba(201,168,76,0.06); }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-btn:disabled:hover { border-color: var(--border); background: var(--bg-card); }
+
+/* Loading skeleton */
+.skeleton {
+  padding: 20px 0;
+}
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, #221e18 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.skeleton-line.wide { width: 100%; height: 28px; }
+.skeleton-line.med { width: 75%; }
+.skeleton-line.short { width: 50%; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Mobile */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.mobile-header h1 {
+  font-family: 'Amiri', serif;
+  color: var(--gold);
+  font-size: 1.2rem;
+}
+.menu-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .mobile-header { display: flex; }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .main {
+    margin-left: 0;
+    padding: 72px 16px 32px;
+  }
+}
+
+/* Scroll to top */
+.scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  transition: opacity 0.2s;
+}
+.scroll-top.visible { display: flex; }
+
+/* Bookmark pin */
+.ayah-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 3px 8px;
+  margin-left: 8px;
+  transition: all 0.15s;
+  vertical-align: middle;
+}
+.ayah-pin:hover { border-color: var(--gold-dim); color: var(--gold); }
+.ayah-pin.pinned {
+  border-color: var(--gold-dim);
+  background: rgba(201,168,76,0.12);
+  color: var(--gold);
+}
+
+.resume-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: calc(100% - 32px);
+  margin: 8px 16px;
+  padding: 8px 0;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  color: var(--gold);
+  font-family: 'Lora', serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.resume-btn:hover { background: rgba(201,168,76,0.18); }
+.resume-btn .pin-icon { font-size: 0.95rem; }
+</style>
+</head>
+<body>
+
+<div class="mobile-header">
+  <h1>القرآن الكريم</h1>
+  <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+</div>
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>القرآن الكريم</h1>
+      <div style="font-family:'IM Fell English SC',serif;text-align:center;font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;letter-spacing:0.1em">CHRONOLOGICAL ORDER</div>
+      <input type="text" class="search-box" id="search" placeholder="Search surah…">
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="meccan">Meccan</button>
+        <button class="filter-btn" data-filter="medinan">Medinan</button>
+      </div>
+    </div>
+    <div id="resumeContainer"></div>
+    <div class="surah-list" id="surahList"></div>
+  </aside>
+
+  <main class="main" id="main">
+    <div id="content"></div>
+  </main>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script src="seerah-data.js"></script>
+<script>
+// Revelation order: [revPos, surahNum, name, type, notes]
+const REVELATION_ORDER = [
+  [1,96,"Al-Alaq","Meccan",""],
+  [2,68,"Al-Qalam","Meccan","Except 17-33 and 48-50, from Medina"],
+  [3,73,"Al-Muzzammil","Meccan","Except 10, 11 and 20, from Medina"],
+  [4,74,"Al-Muddaththir","Meccan",""],
+  [5,1,"Al-Faatiha","Meccan",""],
+  [6,111,"Al-Masad","Meccan",""],
+  [7,81,"At-Takwir","Meccan",""],
+  [8,87,"Al-A'laa","Meccan",""],
+  [9,92,"Al-Lail","Meccan",""],
+  [10,89,"Al-Fajr","Meccan",""],
+  [11,93,"Ad-Dhuhaa","Meccan",""],
+  [12,94,"Ash-Sharh","Meccan",""],
+  [13,103,"Al-Asr","Meccan",""],
+  [14,100,"Al-Aadiyaat","Meccan",""],
+  [15,108,"Al-Kawthar","Meccan",""],
+  [16,102,"At-Takaathur","Meccan",""],
+  [17,107,"Al-Maa'un","Meccan","Only 1-3 from Mecca; the rest from Medina"],
+  [18,109,"Al-Kaafiroon","Meccan",""],
+  [19,105,"Al-Fil","Meccan",""],
+  [20,113,"Al-Falaq","Meccan",""],
+  [21,114,"An-Naas","Meccan",""],
+  [22,112,"Al-Ikhlaas","Meccan",""],
+  [23,53,"An-Najm","Meccan","Except 32, from Medina"],
+  [24,80,"Abasa","Meccan",""],
+  [25,97,"Al-Qadr","Meccan",""],
+  [26,91,"Ash-Shams","Meccan",""],
+  [27,85,"Al-Burooj","Meccan",""],
+  [28,95,"At-Tin","Meccan",""],
+  [29,106,"Quraish","Meccan",""],
+  [30,101,"Al-Qaari'a","Meccan",""],
+  [31,75,"Al-Qiyaama","Meccan",""],
+  [32,104,"Al-Humaza","Meccan",""],
+  [33,77,"Al-Mursalaat","Meccan","Except 48, from Medina"],
+  [34,50,"Qaaf","Meccan","Except 38, from Medina"],
+  [35,90,"Al-Balad","Meccan",""],
+  [36,86,"At-Taariq","Meccan",""],
+  [37,54,"Al-Qamar","Meccan","Except 44-46, from Medina"],
+  [38,38,"Saad","Meccan",""],
+  [39,7,"Al-A'raaf","Meccan","Except 163-170, from Medina"],
+  [40,72,"Al-Jinn","Meccan",""],
+  [41,36,"Yaseen","Meccan","Except 45, from Medina"],
+  [42,25,"Al-Furqaan","Meccan","Except 68-70, from Medina"],
+  [43,35,"Faatir","Meccan",""],
+  [44,19,"Maryam","Meccan","Except 58 and 71, from Medina"],
+  [45,20,"Taa-Haa","Meccan","Except 130 and 131, from Medina"],
+  [46,56,"Al-Waaqia","Meccan","Except 81 and 82, from Medina"],
+  [47,26,"Ash-Shu'araa","Meccan","Except 197 and 224-227, from Medina"],
+  [48,27,"An-Naml","Meccan",""],
+  [49,28,"Al-Qasas","Meccan","Except 52-55 from Medina and 85 from Juhfa at the time of the Hijra"],
+  [50,17,"Al-Israa","Meccan","Except 26, 32, 33, 57, 73-80, from Medina"],
+  [51,10,"Yunus","Meccan","Except 40, 94, 95, 96, from Medina"],
+  [52,11,"Hud","Meccan","Except 12, 17, 114, from Medina"],
+  [53,12,"Yusuf","Meccan","Except 1, 2, 3, 7, from Medina"],
+  [54,15,"Al-Hijr","Meccan","Except 87, from Medina"],
+  [55,6,"Al-An'aam","Meccan","Except 20, 23, 91, 93, 114, 151, 152, 153, from Medina"],
+  [56,37,"As-Saaffaat","Meccan",""],
+  [57,31,"Luqman","Meccan","Except 27-29, from Medina"],
+  [58,34,"Saba","Meccan",""],
+  [59,39,"Az-Zumar","Meccan",""],
+  [60,40,"Al-Ghaafir","Meccan","Except 56, 57, from Medina"],
+  [61,41,"Fussilat","Meccan",""],
+  [62,42,"Ash-Shura","Meccan","Except 23, 24, 25, 27, from Medina"],
+  [63,43,"Az-Zukhruf","Meccan","Except 54, from Medina"],
+  [64,44,"Ad-Dukhaan","Meccan",""],
+  [65,45,"Al-Jaathiya","Meccan","Except 14, from Medina"],
+  [66,46,"Al-Ahqaf","Meccan","Except 10, 15, 35, from Medina"],
+  [67,51,"Adh-Dhaariyat","Meccan",""],
+  [68,88,"Al-Ghaashiya","Meccan",""],
+  [69,18,"Al-Kahf","Meccan","Except 28, 83-101, from Medina"],
+  [70,16,"An-Nahl","Meccan","Except the last three verses from Medina"],
+  [71,71,"Nooh","Meccan",""],
+  [72,14,"Ibrahim","Meccan","Except 28, 29, from Medina"],
+  [73,21,"Al-Anbiyaa","Meccan",""],
+  [74,23,"Al-Muminoon","Meccan",""],
+  [75,32,"As-Sajda","Meccan","Except 16-20, from Medina"],
+  [76,52,"At-Tur","Meccan",""],
+  [77,67,"Al-Mulk","Meccan",""],
+  [78,69,"Al-Haaqqa","Meccan",""],
+  [79,70,"Al-Ma'aarij","Meccan",""],
+  [80,78,"An-Naba","Meccan",""],
+  [81,79,"An-Naazi'aat","Meccan",""],
+  [82,82,"Al-Infitaar","Meccan",""],
+  [83,84,"Al-Inshiqaaq","Meccan",""],
+  [84,30,"Ar-Room","Meccan","Except 17, from Medina"],
+  [85,29,"Al-Ankaboot","Meccan","Except 1-11, from Medina"],
+  [86,83,"Al-Mutaffifin","Meccan",""],
+  [87,2,"Al-Baqara","Medinan","Except 281 from Mina at the time of the Last Hajj"],
+  [88,8,"Al-Anfaal","Medinan","Except 30-36 from Mecca"],
+  [89,3,"Aal-i-Imraan","Medinan",""],
+  [90,33,"Al-Ahzaab","Medinan",""],
+  [91,60,"Al-Mumtahana","Medinan",""],
+  [92,4,"An-Nisaa","Medinan",""],
+  [93,99,"Az-Zalzala","Medinan",""],
+  [94,57,"Al-Hadid","Medinan",""],
+  [95,47,"Muhammad","Medinan","Except 13, revealed during the Prophet's Hijrah"],
+  [96,13,"Ar-Ra'd","Medinan",""],
+  [97,55,"Ar-Rahmaan","Medinan",""],
+  [98,76,"Al-Insaan","Medinan",""],
+  [99,65,"At-Talaaq","Medinan",""],
+  [100,98,"Al-Bayyina","Medinan",""],
+  [101,59,"Al-Hashr","Medinan",""],
+  [102,24,"An-Noor","Medinan",""],
+  [103,22,"Al-Hajj","Medinan","Except 52-55, revealed between Mecca and Medina"],
+  [104,63,"Al-Munaafiqoon","Medinan",""],
+  [105,58,"Al-Mujaadila","Medinan",""],
+  [106,49,"Al-Hujuraat","Medinan",""],
+  [107,66,"At-Tahrim","Medinan",""],
+  [108,64,"At-Taghaabun","Medinan",""],
+  [109,61,"As-Saff","Medinan",""],
+  [110,62,"Al-Jumu'a","Medinan",""],
+  [111,48,"Al-Fath","Medinan","Revealed while returning from Hudaybiyya"],
+  [112,5,"Al-Maaida","Medinan","Except 3, revealed at Arafat on Last Hajj"],
+  [113,9,"At-Tawba","Medinan","Except last two verses from Mecca"],
+  [114,110,"An-Nasr","Medinan","Revealed at Mina on Last Hajj"]
+];
+
+// Arabic names lookup (surah number -> Arabic name)
+const ARABIC_NAMES = {
+  1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",6:"الأنعام",7:"الأعراف",
+  8:"الأنفال",9:"التوبة",10:"يونس",11:"هود",12:"يوسف",13:"الرعد",14:"إبراهيم",15:"الحجر",
+  16:"النحل",17:"الإسراء",18:"الكهف",19:"مريم",20:"طه",21:"الأنبياء",22:"الحج",23:"المؤمنون",
+  24:"النور",25:"الفرقان",26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
+  31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",36:"يس",37:"الصافات",38:"ص",
+  39:"الزمر",40:"غافر",41:"فصلت",42:"الشورى",43:"الزخرف",44:"الدخان",45:"الجاثية",
+  46:"الأحقاف",47:"محمد",48:"الفتح",49:"الحجرات",50:"ق",51:"الذاريات",52:"الطور",
+  53:"النجم",54:"القمر",55:"الرحمن",56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",
+  60:"الممتحنة",61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",66:"التحريم",
+  67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",71:"نوح",72:"الجن",73:"المزمل",74:"المدثر",
+  75:"القيامة",76:"الإنسان",77:"المرسلات",78:"النبأ",79:"النازعات",80:"عبس",81:"التكوير",
+  82:"الانفطار",83:"المطففين",84:"الانشقاق",85:"البروج",86:"الطارق",87:"الأعلى",88:"الغاشية",
+  89:"الفجر",90:"البلد",91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",96:"العلق",
+  97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",101:"القارعة",102:"التكاثر",103:"العصر",
+  104:"الهمزة",105:"الفيل",106:"قريش",107:"الماعون",108:"الكوثر",109:"الكافرون",110:"النصر",
+  111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس"
+};
+
+// Seerah periods — based on "The Sealed Nectar" (Ar-Raheeq Al-Makhtum)
+const SEERAH_PERIODS = {
+  early_meccan_secret: {
+    title: "Secret Da'wah — The First Three Years",
+    titleBs: "Tajna da'wa — Prve tri godine",
+    summary: "After the first revelation in the Cave of Hira (610 CE), the Prophet Muhammad \uFDFA began calling people to Islam in secret. A small group of believers gathered, praying in hidden places and enduring quiet hardship. The Quraysh were not yet aware of the growing movement.",
+    summaryBs: "Nakon prve objave u pe\u0107ini Hira (610. godine), Poslanik Muhammed \uFDFA je po\u010Deo pozivati ljude u islam u tajnosti. Mala grupa vjernika se okupljala, klanjaju\u0107i na skrivenim mjestima i podnose\u0107i te\u0161ko\u0107e. Kurej\u0161ije jo\u0161 nisu bili svjesni rastu\u0107eg pokreta.",
+    yearRange: "610–613 CE"
+  },
+  early_meccan_open: {
+    title: "Open Preaching & Early Persecution",
+    titleBs: "Javno pozivanje i po\u010Detak progona",
+    summary: "The Prophet \uFDFA was commanded to preach openly. He stood on Mount Safa and called the Quraysh, warning them of God's punishment. The leaders of Mecca responded with mockery, then hostility. Early Muslims faced torture — Bilal, Ammar, Sumayyah and others were persecuted. Some believers migrated to Abyssinia seeking refuge under the just Christian king, Negus.",
+    summaryBs: "Poslaniku \uFDFA je nare\u0111eno da javno poziva. Stao je na brdo Safa i pozvao Kurej\u0161ije, upozoravaju\u0107i ih na Allahovu kaznu. Vo\u0111e Meke su odgovorile ismijavanjem, a potom neprijateljstvom. Rani muslimani su mu\u010Deni — Bilal, Ammar, Sumejja i drugi su progonjeni. Neki vjernici su se iselili u Abesiniju tra\u017Ee\u0107i uto\u010Di\u0161te kod pravednog kr\u0161\u0107anskog kralja Ned\u017Ea\u0161ije.",
+    yearRange: "613–616 CE"
+  },
+  mid_meccan: {
+    title: "Persecution, Boycott & Year of Sorrow",
+    titleBs: "Progon, bojkot i Godina tuge",
+    summary: "The Quraysh imposed a total boycott on the Prophet's clan of Banu Hashim, confining them to the Valley of Abu Talib for three years. After the boycott ended, the Prophet \uFDFA lost both his wife Khadijah and his uncle Abu Talib in what became known as the Year of Sorrow (619 CE). He traveled to Ta'if seeking support but was driven out and stoned. Despite the darkness of this period, the surahs revealed offered profound consolation and promises of God's support.",
+    summaryBs: "Kurej\u0161ije su nametnule potpuni bojkot Poslanikovom klanu Benu Ha\u0161im, zatvoriv\u0161i ih u dolinu Ebu Taliba na tri godine. Nakon bojkota, Poslanik \uFDFA je izgubio suprugu Had\u017Eid\u017Eu i amid\u017Eu Ebu Taliba u Godini tuge (619). Putovao je u Taif tra\u017Ee\u0107i podr\u0161ku, ali je protjeran i kamenovan. Uprkos tami tog perioda, objavljeni surevi su nudili duboku utjehu i obe\u0107anja Allahove podr\u0161ke.",
+    yearRange: "616–619 CE"
+  },
+  late_meccan: {
+    title: "Isra & Mi'raj, Pledges of Aqabah",
+    titleBs: "Isra i Mi'rad\u017E, prisege na Akabi",
+    summary: "In the Prophet's darkest hour, God honored him with the Night Journey (Isra) from Mecca to Jerusalem, and the Ascension (Mi'raj) through the heavens, where the five daily prayers were ordained. Meanwhile, pilgrims from Yathrib (Medina) embraced Islam during the Hajj seasons. At the First and Second Pledges of Aqabah, they swore allegiance and invited the Prophet to their city. The migration (Hijrah) was being prepared.",
+    summaryBs: "U najte\u017Eem trenutku, Allah je po\u010Dastio Poslanika No\u0107nim putovanjem (Isra) iz Meke u Jerusalem i Uspenjem (Mi'rad\u017E) kroz nebesa, gdje je propisano pet dnevnih namaza. U me\u0111uvremenu, hodo\u010Dasnici iz Jesriba (Medine) su primili islam tokom had\u017Ed\u017E sezona. Na Prvoj i Drugoj prisezi na Akabi, zakleli su se na odanost i pozvali Poslanika u svoj grad. Pripremala se Hid\u017Era.",
+    yearRange: "619–622 CE"
+  },
+  early_medinan: {
+    title: "Hijrah & The New State — Badr, Uhud, Khandaq",
+    titleBs: "Hid\u017Era i nova dr\u017Eava — Bedr, Uhud, Hendek",
+    summary: "The Prophet \uFDFA migrated to Medina, establishing the first Islamic state. He built the Prophet's Mosque, drafted the Constitution of Medina uniting Muslims and Jewish tribes, and created bonds of brotherhood between the Muhajirun (emigrants) and Ansar (helpers). The major battles defined this era: Badr (624 CE) — the first decisive victory with 313 Muslims against 1,000 Quraysh; Uhud (625 CE) — a painful lesson in discipline; and the Battle of the Trench (627 CE) — where Medina was besieged by a coalition of 10,000.",
+    summaryBs: "Poslanik \uFDFA se iselio u Medinu i osnovao prvu islamsku dr\u017Eavu. Sagradio je Poslanikovu d\u017Eamiju, sastavio Medinski ustav koji je ujedinio muslimane i jevrejska plemena, te stvorio bratske veze izme\u0111u muhad\u017Eira i ensarija. Velike bitke su obilje\u017Eile ovu eru: Bedr (624) — prva odlu\u010Duju\u0107a pobjeda sa 313 muslimana protiv 1000 Kurej\u0161ija; Uhud (625) — bolna lekcija o disciplini; i Bitka na Hendeku (627) — kad je Medina bila pod opsadom koalicije od 10.000.",
+    yearRange: "622–627 CE"
+  },
+  late_medinan: {
+    title: "Hudaybiyyah, Conquest of Mecca & Farewell",
+    titleBs: "Hudejbija, osvajanje Meke i opro\u0161taj",
+    summary: "The Treaty of Hudaybiyyah (628 CE), though initially seeming like a setback, was called a 'clear victory' by the Quran. It opened the door to peaceful da'wah, and Islam spread rapidly. When the Quraysh violated the treaty, the Prophet \uFDFA marched on Mecca with 10,000 Muslims and conquered it almost without bloodshed (630 CE). He forgave his former persecutors. The remaining Arabian tribes sent delegations accepting Islam. In his Farewell Pilgrimage (632 CE), the Prophet \uFDFA addressed over 100,000 people, and Surah An-Nasr — the final revelation — signaled the completion of his mission.",
+    summaryBs: "Ugovor na Hudejbiji (628), iako se isprva \u010Dinio kao neuspjeh, Kur'an ga je nazvao 'jasnom pobjedom'. Otvorio je vrata mirnom pozivanju i islam se brzo \u0161irio. Kad su Kurej\u0161ije prekr\u0161ile ugovor, Poslanik \uFDFA je krenuo na Meku sa 10.000 muslimana i osvojio je gotovo bez krvoproli\u0107a (630). Oprostio je biv\u0161im progonitelima. Preostala arapska plemena su slala delegacije i prihvatila islam. Na Opro\u0161tajnom had\u017Ed\u017Eu (632), Poslanik \uFDFA se obratio vi\u0161e od 100.000 ljudi, a sura En-Nasr — posljednja objava — ozna\u010Dila je zavr\u0161etak njegove misije."
+  }
+};
+
+function getPeriodForRevPos(revPos) {
+  if (revPos <= 10) return 'early_meccan_secret';
+  if (revPos <= 30) return 'early_meccan_open';
+  if (revPos <= 55) return 'mid_meccan';
+  if (revPos <= 86) return 'late_meccan';
+  if (revPos <= 100) return 'early_medinan';
+  return 'late_medinan';
+}
+
+// SEERAH_DATA loaded from seerah-data.js
+
+const cache = new Map();
+
+// Restore from localStorage
+const saved = JSON.parse(localStorage.getItem('quran-prefs') || 'null');
+let currentRevIndex = saved?.revIndex ?? 0;
+let activeFilter = saved?.filter ?? 'all';
+let activeLangs = saved?.langs ?? { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
+let pinnedAyah = saved?.pinned ?? null; // { surahNum, ayahNum, revIndex, surahName }
+let seerahOpen = saved?.seerahOpen ?? false;
+let seerahLang = saved?.seerahLang ?? 'en';
+
+function savePrefs() {
+  localStorage.setItem('quran-prefs', JSON.stringify({
+    revIndex: currentRevIndex,
+    filter: activeFilter,
+    langs: activeLangs,
+    pinned: pinnedAyah,
+    seerahOpen,
+    seerahLang
+  }));
+}
+
+function togglePin(surahNum, ayahNum, revIndex, surahName) {
+  if (pinnedAyah && pinnedAyah.surahNum === surahNum && pinnedAyah.ayahNum === ayahNum) {
+    pinnedAyah = null;
+  } else {
+    pinnedAyah = { surahNum, ayahNum, revIndex, surahName };
+  }
+  savePrefs();
+  updatePinButtons();
+  renderResumeBtn();
+}
+
+function updatePinButtons() {
+  document.querySelectorAll('.ayah-pin').forEach(btn => {
+    const s = +btn.dataset.surah, a = +btn.dataset.ayah;
+    const isPinned = pinnedAyah && pinnedAyah.surahNum === s && pinnedAyah.ayahNum === a;
+    btn.classList.toggle('pinned', isPinned);
+    btn.innerHTML = isPinned ? '📌 Pinned' : '📌 Pin here';
+  });
+}
+
+function renderResumeBtn() {
+  const container = document.getElementById('resumeContainer');
+  if (!pinnedAyah) { container.innerHTML = ''; return; }
+  container.innerHTML = `
+    <button class="resume-btn" onclick="resumeFromPin()">
+      <span class="pin-icon">📌</span>
+      Resume — ${pinnedAyah.surahName} : ${pinnedAyah.ayahNum}
+    </button>`;
+}
+
+async function resumeFromPin() {
+  if (!pinnedAyah) return;
+  await loadByRevIndex(pinnedAyah.revIndex);
+  setTimeout(() => {
+    const el = document.querySelector(`.ayah-pin[data-surah="${pinnedAyah.surahNum}"][data-ayah="${pinnedAyah.ayahNum}"]`);
+    if (el) el.closest('.ayah').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+}
+
+function getCurrentEntry() { return REVELATION_ORDER[currentRevIndex]; }
+
+function getFilteredList() {
+  if (activeFilter === 'all') return REVELATION_ORDER;
+  const type = activeFilter === 'meccan' ? 'Meccan' : 'Medinan';
+  return REVELATION_ORDER.filter(e => e[3] === type);
+}
+
+// Build sidebar
+function buildSidebar() {
+  const list = document.getElementById('surahList');
+  list.innerHTML = '';
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = getFilteredList();
+  const currentSurahNum = getCurrentEntry()[1];
+
+  filtered.forEach(entry => {
+    const [revPos, surahNum, name, type] = entry;
+    const nameAr = ARABIC_NAMES[surahNum];
+    if (q && !name.toLowerCase().includes(q) && !nameAr.includes(q) && !String(surahNum).includes(q)) return;
+
+    const div = document.createElement('div');
+    div.className = 'surah-item' + (surahNum === currentSurahNum ? ' active' : '');
+    div.innerHTML = `
+      <span class="surah-num">${revPos}</span>
+      <div class="surah-info">
+        <div class="surah-name-ar">${nameAr}</div>
+        <div class="surah-name-en">${name}</div>
+      </div>
+      <span class="surah-mushaf-num">${surahNum}</span>
+      <span class="surah-type-dot ${type.toLowerCase()}"></span>
+    `;
+    div.onclick = () => {
+      const idx = REVELATION_ORDER.indexOf(entry);
+      loadByRevIndex(idx);
+    };
+    list.appendChild(div);
+  });
+}
+
+// Loading skeleton
+function showLoading() {
+  const content = document.getElementById('content');
+  let html = '<div class="skeleton">';
+  for (let i = 0; i < 8; i++) {
+    const cls = i % 3 === 0 ? 'wide' : i % 3 === 1 ? 'med' : 'short';
+    html += `<div class="skeleton-line ${cls}"></div>`;
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// Fetch surah (all 4 editions)
+async function fetchSurah(num) {
+  if (cache.has(num)) return cache.get(num);
+  const resp = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,en.transliteration,en.sahih,bs.mlivo,tr.diyanet`);
+  if (!resp.ok) throw new Error('Failed to fetch surah');
+  const json = await resp.json();
+  const data = {
+    arabic: json.data[0],
+    transliteration: json.data[1],
+    english: json.data[2],
+    bosnian: json.data[3],
+    turkish: json.data[4]
+  };
+  cache.set(num, data);
+  return data;
+}
+
+// Language toggle HTML
+function langTogglesHTML() {
+  const langs = [
+    { key: 'arabic', flag: '\u{1F1F8}\u{1F1E6}', label: 'Arabic' },
+    { key: 'transliteration', flag: '\u{1F524}', label: 'Transliteration' },
+    { key: 'bosnian', flag: '\u{1F1E7}\u{1F1E6}', label: 'Bosnian' },
+    { key: 'english', flag: '\u{1F1EC}\u{1F1E7}', label: 'English' },
+    { key: 'turkish', flag: '\u{1F1F9}\u{1F1F7}', label: 'Turkish' }
+  ];
+  return '<div class="lang-toggles">' +
+    langs.map(l => `<button class="lang-pill${activeLangs[l.key] ? ' active' : ''}" data-lang="${l.key}">${l.flag} ${l.label}</button>`).join('') +
+    '</div>';
+}
+
+// Seerah panel HTML
+function seerahPanelHTML(surahNum, revPos) {
+  const periodKey = getPeriodForRevPos(revPos);
+  const period = SEERAH_PERIODS[periodKey];
+  const data = (typeof SEERAH_DATA !== 'undefined') ? SEERAH_DATA[surahNum] : null;
+  if (!period) return '';
+
+  const isEn = seerahLang === 'en';
+  const periodTitle = isEn ? period.title : period.titleBs;
+  const periodSummary = isEn ? period.summary : period.summaryBs;
+  const story = data ? (isEn ? data.story : data.storyBs) : '';
+  const events = data ? (data.keyEvents || []) : [];
+  const ref = data ? data.ref : '';
+
+  let body = '';
+  body += `<div class="seerah-period-title">${periodTitle}</div>`;
+  if (period.yearRange) body += `<div class="seerah-period-years">${period.yearRange}</div>`;
+  body += `<div class="seerah-lang-btns">
+    <button class="seerah-lang-btn ${seerahLang==='en'?'active':''}" onclick="switchSeerahLang('en')">EN</button>
+    <button class="seerah-lang-btn ${seerahLang==='bs'?'active':''}" onclick="switchSeerahLang('bs')">BS</button>
+  </div>`;
+  body += `<div class="seerah-text period-summary">${periodSummary}</div>`;
+  if (story) body += `<div class="seerah-text">${story}</div>`;
+  if (events.length) {
+    body += '<ul class="seerah-events">' + events.map(e => `<li>${e}</li>`).join('') + '</ul>';
+  }
+  body += `<a class="seerah-ref" href="https://d1.islamhouse.com/data/bs/ih_books/single/bs_Zapecaceni_dzennetski_napitak.pdf" target="_blank" rel="noopener">Read full chapter in The Sealed Nectar (PDF)${ref ? ' — ' + ref : ''}</a>`;
+
+  return `<div class="seerah-panel">
+    <div class="seerah-toggle" onclick="toggleSeerah()">
+      <span class="seerah-toggle-icon ${seerahOpen?'rotated':''}">&#9654;</span>
+      <span class="seerah-toggle-title">Story of this Revelation</span>
+      <span class="seerah-toggle-period">${period.yearRange || ''}</span>
+    </div>
+    <div class="seerah-body ${seerahOpen?'expanded':''}">
+      <div class="seerah-content">${body}</div>
+    </div>
+  </div>`;
+}
+
+function toggleSeerah() {
+  const body = document.querySelector('.seerah-body');
+  const icon = document.querySelector('.seerah-toggle-icon');
+  if (!body) return;
+  seerahOpen = !seerahOpen;
+  body.classList.toggle('expanded', seerahOpen);
+  if (icon) icon.classList.toggle('rotated', seerahOpen);
+  savePrefs();
+}
+
+function switchSeerahLang(lang) {
+  seerahLang = lang;
+  savePrefs();
+  loadByRevIndex(currentRevIndex);
+}
+
+// Render surah
+async function loadByRevIndex(idx) {
+  currentRevIndex = idx;
+  savePrefs();
+  const entry = REVELATION_ORDER[idx];
+  const [revPos, surahNum, name, type, notes] = entry;
+  const nameAr = ARABIC_NAMES[surahNum];
+
+  buildSidebar();
+  showLoading();
+  window.scrollTo({ top: 0 });
+
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+
+  try {
+    const data = await fetchSurah(surahNum);
+    const content = document.getElementById('content');
+    const typeClass = type.toLowerCase();
+    const ayahCount = data.arabic.ayahs.length;
+
+    let html = langTogglesHTML();
+
+    html += `
+      <div class="surah-header">
+        <div class="surah-header-label">Revelation #${revPos}</div>
+        <div class="surah-header-ar">${nameAr}</div>
+        <div class="surah-header-en">${name}</div>
+        <div class="surah-meta">
+          <span class="surah-badge ${typeClass}">${type}</span>
+          <span>Surah ${surahNum}</span>
+          <span>${ayahCount} ayahs</span>
+        </div>
+      </div>
+    `;
+
+    if (notes) {
+      html += `<div class="notes-banner">${notes}</div>`;
+    }
+
+    html += seerahPanelHTML(surahNum, revPos);
+
+    if (surahNum !== 9 && surahNum !== 1) {
+      html += '<div class="bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>';
+    }
+
+    const ar = data.arabic.ayahs;
+    const tl = data.transliteration.ayahs;
+    const en = data.english.ayahs;
+    const bs = data.bosnian.ayahs;
+    const tr = data.turkish.ayahs;
+
+    for (let i = 0; i < ar.length; i++) {
+      const isPinned = pinnedAyah && pinnedAyah.surahNum === surahNum && pinnedAyah.ayahNum === ar[i].numberInSurah;
+      html += `<div class="ayah">
+        <div class="ayah-num-badge">${ar[i].numberInSurah}</div>
+        <button class="ayah-pin ${isPinned ? 'pinned' : ''}" data-surah="${surahNum}" data-ayah="${ar[i].numberInSurah}" onclick="togglePin(${surahNum},${ar[i].numberInSurah},${idx},'${name.replace(/'/g, "\\'")}')">${isPinned ? '📌 Pinned' : '📌 Pin here'}</button>
+        <div class="ayah-arabic" ${activeLangs.arabic ? '' : 'style="display:none"'}>${ar[i].text}</div>
+        <div class="ayah-transliteration" data-lang="transliteration" ${activeLangs.transliteration ? '' : 'style="display:none"'}>${tl[i].text}</div>
+        <div class="ayah-translation" data-lang="bosnian" ${activeLangs.bosnian ? '' : 'style="display:none"'}><span class="lang-label">Bosnian</span>${bs[i].text}</div>
+        <div class="ayah-translation" data-lang="english" ${activeLangs.english ? '' : 'style="display:none"'}><span class="lang-label">English</span>${en[i].text}</div>
+        <div class="ayah-translation" data-lang="turkish" ${activeLangs.turkish ? '' : 'style="display:none"'}><span class="lang-label">Turkish</span>${tr[i].text}</div>
+      </div>`;
+    }
+
+    // Prev / Next in revelation order
+    const prev = idx > 0 ? idx - 1 : null;
+    const next = idx < 113 ? idx + 1 : null;
+    html += `
+      <div class="nav-buttons">
+        <button class="nav-btn" ${prev !== null ? `onclick="loadByRevIndex(${prev})"` : 'disabled'}>\u2190 ${prev !== null ? REVELATION_ORDER[prev][2] : ''}</button>
+        <button class="nav-btn" ${next !== null ? `onclick="loadByRevIndex(${next})"` : 'disabled'}>${next !== null ? REVELATION_ORDER[next][2] : ''} \u2192</button>
+      </div>
+    `;
+
+    content.innerHTML = html;
+    bindLangToggles();
+  } catch (err) {
+    document.getElementById('content').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
+        <p style="font-size:1.2rem;margin-bottom:12px">Failed to load surah</p>
+        <p style="font-size:0.85rem">${err.message}</p>
+        <button class="nav-btn" style="margin-top:20px" onclick="loadByRevIndex(${idx})">Retry</button>
+      </div>
+    `;
+  }
+}
+
+// Language toggle logic
+function bindLangToggles() {
+  document.querySelectorAll('.lang-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.dataset.lang;
+      const activeCount = Object.values(activeLangs).filter(Boolean).length;
+      // Don't allow disabling the last active language
+      if (activeLangs[lang] && activeCount <= 1) return;
+      activeLangs[lang] = !activeLangs[lang];
+      savePrefs();
+      btn.classList.toggle('active', activeLangs[lang]);
+
+      // Toggle visibility
+      if (lang === 'arabic') {
+        document.querySelectorAll('.ayah-arabic').forEach(el => el.style.display = activeLangs.arabic ? '' : 'none');
+      } else if (lang === 'transliteration') {
+        document.querySelectorAll('.ayah-transliteration').forEach(el => el.style.display = activeLangs.transliteration ? '' : 'none');
+      } else {
+        document.querySelectorAll(`.ayah-translation[data-lang="${lang}"]`).forEach(el => el.style.display = activeLangs[lang] ? '' : 'none');
+      }
+    });
+  });
+}
+
+// Search
+document.getElementById('search').addEventListener('input', () => buildSidebar());
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    savePrefs();
+    buildSidebar();
+  });
+});
+
+// Mobile sidebar toggle
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+});
+
+// Init — restore saved state or start at first revelation
+if (activeFilter !== 'all') {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === activeFilter);
+  });
+}
+buildSidebar();
+renderResumeBtn();
+loadByRevIndex(currentRevIndex);
+</script>
+</body>
+</html>
