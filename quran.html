@@ -246,6 +246,128 @@ body::before {
   font-style: italic;
 }
 
+/* Seerah panel */
+.seerah-panel {
+  background: rgba(201,168,76,0.04);
+  border: 1px solid rgba(201,168,76,0.12);
+  border-left: 3px solid var(--gold-dim);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.seerah-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.seerah-toggle:hover { background: rgba(201,168,76,0.06); }
+.seerah-toggle-icon {
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  transition: transform 0.25s;
+}
+.seerah-toggle-icon.rotated { transform: rotate(90deg); }
+.seerah-toggle-title {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.seerah-toggle-period {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.seerah-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.seerah-body.expanded { max-height: 2000px; }
+.seerah-content {
+  padding: 0 16px 16px;
+}
+.seerah-period-title {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.8rem;
+  color: var(--gold-dim);
+  margin-bottom: 6px;
+  letter-spacing: 0.06em;
+}
+.seerah-period-years {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.seerah-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.seerah-text.period-summary {
+  color: var(--text-muted);
+  font-style: italic;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.seerah-events {
+  list-style: none;
+  margin-bottom: 12px;
+}
+.seerah-events li {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 3px 0 3px 16px;
+  position: relative;
+}
+.seerah-events li::before {
+  content: '\2726';
+  position: absolute;
+  left: 0;
+  color: var(--gold-dim);
+}
+.seerah-ref {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  text-decoration: none;
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 4px;
+  padding: 4px 10px;
+  transition: all 0.15s;
+}
+.seerah-ref:hover {
+  background: rgba(201,168,76,0.08);
+  color: var(--gold);
+}
+.seerah-lang-btns {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.seerah-lang-btn {
+  padding: 2px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+}
+.seerah-lang-btn.active {
+  background: rgba(201,168,76,0.1);
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+
 /* Language toggles */
 .lang-toggles {
   display: flex;
@@ -664,6 +786,115 @@ const ARABIC_NAMES = {
   97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",101:"القارعة",102:"التكاثر",103:"العصر",
   104:"الهمزة",105:"الفيل",106:"قريش",107:"الماعون",108:"الكوثر",109:"الكافرون",110:"النصر",
   111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس"
+};
+
+// Seerah periods — based on "The Sealed Nectar" (Ar-Raheeq Al-Makhtum)
+const SEERAH_PERIODS = {
+  early_meccan_secret: {
+    title: "Secret Da'wah — The First Three Years",
+    titleBs: "Tajna da'wa — Prve tri godine",
+    summary: "After the first revelation in the Cave of Hira (610 CE), the Prophet Muhammad \uFDFA began calling people to Islam in secret. A small group of believers gathered, praying in hidden places and enduring quiet hardship. The Quraysh were not yet aware of the growing movement.",
+    summaryBs: "Nakon prve objave u pe\u0107ini Hira (610. godine), Poslanik Muhammed \uFDFA je po\u010Deo pozivati ljude u islam u tajnosti. Mala grupa vjernika se okupljala, klanjaju\u0107i na skrivenim mjestima i podnose\u0107i te\u0161ko\u0107e. Kurej\u0161ije jo\u0161 nisu bili svjesni rastu\u0107eg pokreta.",
+    yearRange: "610–613 CE"
+  },
+  early_meccan_open: {
+    title: "Open Preaching & Early Persecution",
+    titleBs: "Javno pozivanje i po\u010Detak progona",
+    summary: "The Prophet \uFDFA was commanded to preach openly. He stood on Mount Safa and called the Quraysh, warning them of God's punishment. The leaders of Mecca responded with mockery, then hostility. Early Muslims faced torture — Bilal, Ammar, Sumayyah and others were persecuted. Some believers migrated to Abyssinia seeking refuge under the just Christian king, Negus.",
+    summaryBs: "Poslaniku \uFDFA je nare\u0111eno da javno poziva. Stao je na brdo Safa i pozvao Kurej\u0161ije, upozoravaju\u0107i ih na Allahovu kaznu. Vo\u0111e Meke su odgovorile ismijavanjem, a potom neprijateljstvom. Rani muslimani su mu\u010Deni — Bilal, Ammar, Sumejja i drugi su progonjeni. Neki vjernici su se iselili u Abesiniju tra\u017Ee\u0107i uto\u010Di\u0161te kod pravednog kr\u0161\u0107anskog kralja Ned\u017Ea\u0161ije.",
+    yearRange: "613–616 CE"
+  },
+  mid_meccan: {
+    title: "Persecution, Boycott & Year of Sorrow",
+    titleBs: "Progon, bojkot i Godina tuge",
+    summary: "The Quraysh imposed a total boycott on the Prophet's clan of Banu Hashim, confining them to the Valley of Abu Talib for three years. After the boycott ended, the Prophet \uFDFA lost both his wife Khadijah and his uncle Abu Talib in what became known as the Year of Sorrow (619 CE). He traveled to Ta'if seeking support but was driven out and stoned. Despite the darkness of this period, the surahs revealed offered profound consolation and promises of God's support.",
+    summaryBs: "Kurej\u0161ije su nametnule potpuni bojkot Poslanikovom klanu Benu Ha\u0161im, zatvoriv\u0161i ih u dolinu Ebu Taliba na tri godine. Nakon bojkota, Poslanik \uFDFA je izgubio suprugu Had\u017Eid\u017Eu i amid\u017Eu Ebu Taliba u Godini tuge (619). Putovao je u Taif tra\u017Ee\u0107i podr\u0161ku, ali je protjeran i kamenovan. Uprkos tami tog perioda, objavljeni surevi su nudili duboku utjehu i obe\u0107anja Allahove podr\u0161ke.",
+    yearRange: "616–619 CE"
+  },
+  late_meccan: {
+    title: "Isra & Mi'raj, Pledges of Aqabah",
+    titleBs: "Isra i Mi'rad\u017E, prisege na Akabi",
+    summary: "In the Prophet's darkest hour, God honored him with the Night Journey (Isra) from Mecca to Jerusalem, and the Ascension (Mi'raj) through the heavens, where the five daily prayers were ordained. Meanwhile, pilgrims from Yathrib (Medina) embraced Islam during the Hajj seasons. At the First and Second Pledges of Aqabah, they swore allegiance and invited the Prophet to their city. The migration (Hijrah) was being prepared.",
+    summaryBs: "U najte\u017Eem trenutku, Allah je po\u010Dastio Poslanika No\u0107nim putovanjem (Isra) iz Meke u Jerusalem i Uspenjem (Mi'rad\u017E) kroz nebesa, gdje je propisano pet dnevnih namaza. U me\u0111uvremenu, hodo\u010Dasnici iz Jesriba (Medine) su primili islam tokom had\u017Ed\u017E sezona. Na Prvoj i Drugoj prisezi na Akabi, zakleli su se na odanost i pozvali Poslanika u svoj grad. Pripremala se Hid\u017Era.",
+    yearRange: "619–622 CE"
+  },
+  early_medinan: {
+    title: "Hijrah & The New State — Badr, Uhud, Khandaq",
+    titleBs: "Hid\u017Era i nova dr\u017Eava — Bedr, Uhud, Hendek",
+    summary: "The Prophet \uFDFA migrated to Medina, establishing the first Islamic state. He built the Prophet's Mosque, drafted the Constitution of Medina uniting Muslims and Jewish tribes, and created bonds of brotherhood between the Muhajirun (emigrants) and Ansar (helpers). The major battles defined this era: Badr (624 CE) — the first decisive victory with 313 Muslims against 1,000 Quraysh; Uhud (625 CE) — a painful lesson in discipline; and the Battle of the Trench (627 CE) — where Medina was besieged by a coalition of 10,000.",
+    summaryBs: "Poslanik \uFDFA se iselio u Medinu i osnovao prvu islamsku dr\u017Eavu. Sagradio je Poslanikovu d\u017Eamiju, sastavio Medinski ustav koji je ujedinio muslimane i jevrejska plemena, te stvorio bratske veze izme\u0111u muhad\u017Eira i ensarija. Velike bitke su obilje\u017Eile ovu eru: Bedr (624) — prva odlu\u010Duju\u0107a pobjeda sa 313 muslimana protiv 1000 Kurej\u0161ija; Uhud (625) — bolna lekcija o disciplini; i Bitka na Hendeku (627) — kad je Medina bila pod opsadom koalicije od 10.000.",
+    yearRange: "622–627 CE"
+  },
+  late_medinan: {
+    title: "Hudaybiyyah, Conquest of Mecca & Farewell",
+    titleBs: "Hudejbija, osvajanje Meke i opro\u0161taj",
+    summary: "The Treaty of Hudaybiyyah (628 CE), though initially seeming like a setback, was called a 'clear victory' by the Quran. It opened the door to peaceful da'wah, and Islam spread rapidly. When the Quraysh violated the treaty, the Prophet \uFDFA marched on Mecca with 10,000 Muslims and conquered it almost without bloodshed (630 CE). He forgave his former persecutors. The remaining Arabian tribes sent delegations accepting Islam. In his Farewell Pilgrimage (632 CE), the Prophet \uFDFA addressed over 100,000 people, and Surah An-Nasr — the final revelation — signaled the completion of his mission.",
+    summaryBs: "Ugovor na Hudejbiji (628), iako se isprva \u010Dinio kao neuspjeh, Kur'an ga je nazvao 'jasnom pobjedom'. Otvorio je vrata mirnom pozivanju i islam se brzo \u0161irio. Kad su Kurej\u0161ije prekr\u0161ile ugovor, Poslanik \uFDFA je krenuo na Meku sa 10.000 muslimana i osvojio je gotovo bez krvoproli\u0107a (630). Oprostio je biv\u0161im progonitelima. Preostala arapska plemena su slala delegacije i prihvatila islam. Na Opro\u0161tajnom had\u017Ed\u017Eu (632), Poslanik \uFDFA se obratio vi\u0161e od 100.000 ljudi, a sura En-Nasr — posljednja objava — ozna\u010Dila je zavr\u0161etak njegove misije."
+  }
+};
+
+function getPeriodForRevPos(revPos) {
+  if (revPos <= 10) return 'early_meccan_secret';
+  if (revPos <= 30) return 'early_meccan_open';
+  if (revPos <= 55) return 'mid_meccan';
+  if (revPos <= 86) return 'late_meccan';
+  if (revPos <= 100) return 'early_medinan';
+  return 'late_medinan';
+}
+
+// Seerah data per surah — keyed by surah number
+const SEERAH_DATA = {
+  // === EARLY MECCAN SECRET (Rev 1-10) ===
+  96: { period:'early_meccan_secret',
+    story:"The very first revelation. The Prophet ﷺ was meditating in the Cave of Hira on Mount Noor when the Angel Jibreel appeared and commanded him to 'Read!' (Iqra). Terrified, he rushed home to his wife Khadijah, who wrapped him in a cloak and reassured him. She took him to her cousin Waraqah ibn Nawfal, an elderly Christian scholar, who confirmed that this was the same divine message given to Musa (Moses).",
+    storyBs:"Prva objava. Poslanik ﷺ je meditirao u pećini Hira na brdu Nur kada mu se pojavio melek Džibril i naredio mu 'Čitaj!' (Ikre). Uplašen, požurio je kući supruzi Hadidži, koja ga je umotala u ogrtač i utješila. Odvela ga je kod svog rođaka Vereke ibn Nevfela, starog kršćanskog učenjaka, koji je potvrdio da je to ista božanska poruka data Musau.",
+    keyEvents:["First revelation in Cave of Hira","Angel Jibreel commands 'Iqra' (Read)","Khadijah's comfort and reassurance","Waraqah ibn Nawfal confirms prophethood"],
+    ref:"Ch. 4, pp. 70-75" },
+  68: { period:'early_meccan_secret',
+    story:"The second surah revealed. After the initial revelation, there was a pause (Fatrah) during which no new verses came, causing the Prophet ﷺ great anxiety. When revelation resumed with this surah, it affirmed his noble character — 'You are indeed of great moral character' — and warned his opponents. The 'Nun' and the pen symbolize knowledge and writing, emphasizing the importance of learning from the very start of the Quranic message.",
+    storyBs:"Drugi objavljeni suret. Nakon početne objave, nastupila je pauza (Fetra) tokom koje nove objave nisu dolazile, što je Poslaniku ﷺ uzrokovalo veliku tjeskobu. Kada se objava nastavila ovim suretom, potvrdila je njegov plemeniti karakter — 'Ti si zaista najljepše ćudi' — i upozorila njegove protivnike. 'Nun' i pero simboliziraju znanje i pisanje, naglašavajući važnost učenja od samog početka kur'anske poruke.",
+    keyEvents:["Revelation resumes after the Fatrah (pause)","Affirms the Prophet's noble character","The pen (Al-Qalam) as symbol of knowledge"],
+    ref:"Ch. 4, pp. 75-77" },
+  73: { period:'early_meccan_secret',
+    story:"Revealed early in the Meccan period, this surah commanded the Prophet ﷺ to stand in prayer at night — 'O you wrapped in garments, stand in prayer at night.' The night prayers (Tahajjud) became the spiritual foundation that sustained him through years of persecution. These early believers would gather secretly at night, reciting the Quran and strengthening their faith.",
+    storyBs:"Objavljen rano u mekanskom periodu, ovaj suret je naredio Poslaniku ﷺ da ustane na noćni namaz — 'O ti umotani, ustani noću na namaz.' Noćni namazi (Tehajjud) su postali duhovna osnova koja ga je održavala tokom godina progona. Ti rani vjernici bi se tajno okupljali noću, učeći Kur'an i jačajući svoju vjeru.",
+    keyEvents:["Command to pray at night (Tahajjud)","Spiritual preparation for the mission ahead","Secret night gatherings of early Muslims"],
+    ref:"Ch. 4, pp. 77-78" },
+  74: { period:'early_meccan_secret',
+    story:"'O you covered in a cloak, arise and warn!' This surah marked the transition from personal spiritual experience to a public mission. The Prophet ﷺ was commanded to warn mankind, glorify God, purify himself, and be patient. It was the formal commissioning of his prophetic role. According to tradition, after seeing Jibreel seated on a throne between heaven and earth, the Prophet rushed home and asked to be covered, and this revelation came.",
+    storyBs:"'O ti pokriveni, ustani i opominji!' Ovaj suret je označio prelaz od ličnog duhovnog iskustva ka javnoj misiji. Poslaniku ﷺ je naređeno da upozori čovječanstvo, veliča Allaha, očisti se i bude strpljiv. To je bilo formalno povjeravanje poslaničke uloge. Prema predaji, nakon što je vidio Džibrila kako sjedi na prijestolju između neba i zemlje, Poslanik je požurio kući i tražio da ga pokriju, te je došla ova objava.",
+    keyEvents:["Formal commissioning: 'Arise and warn!'","Command to glorify God and purify oneself","Transition from private to public mission"],
+    ref:"Ch. 4, pp. 78-80" },
+  1: { period:'early_meccan_secret',
+    story:"Al-Fatiha, the Opening — the most recited surah in the world, repeated in every unit of prayer. Though brief (7 verses), it encapsulates the entire message of the Quran: praise of God, acknowledgment of His mercy and sovereignty, and the prayer for guidance to the straight path. It was among the earliest revelations, establishing the foundation of the relationship between Creator and creation.",
+    storyBs:"El-Fatiha, Otvaranje — najčešće učeni suret na svijetu, ponavlja se u svakom rekatu namaza. Iako kratak (7 ajeta), obuhvata cijelu poruku Kur'ana: hvala Allahu, priznanje Njegove milosti i suvereniteta, i dova za uputu na pravi put. Bio je među najranijim objavama, uspostavljajući temelj odnosa između Stvoritelja i stvorenja.",
+    keyEvents:["Establishes the daily prayer (Salah)","Summary of entire Quranic message in 7 verses","The essential du'a (supplication) for guidance"],
+    ref:"Ch. 4" },
+  111: { period:'early_meccan_secret',
+    story:"When the Prophet ﷺ climbed Mount Safa and called out to each clan of the Quraysh to warn them, his uncle Abu Lahab shouted: 'May you perish! Is this why you gathered us?' This surah was revealed immediately in response, declaring that Abu Lahab and his wife (who used to place thorns in the Prophet's path) would be punished. It was a turning point — the opposition within his own family was now open.",
+    storyBs:"Kada se Poslanik ﷺ popeo na brdo Safa i pozvao svaki klan Kurejšija da ih upozori, njegov amidža Ebu Leheb je povikao: 'Propao dabogda! Zar si nas zbog ovoga okupio?' Ovaj suret je odmah objavljen kao odgovor, objavljujući da će Ebu Leheb i njegova žena (koja je stavljala trnje na Poslanikov put) biti kažnjeni. To je bio prekretnica — protivljenje unutar vlastite porodice je sada bilo otvoreno.",
+    keyEvents:["Mount Safa proclamation","Abu Lahab's hostile rejection","First open family opposition"],
+    ref:"Ch. 5, pp. 82-83" },
+  81: { period:'early_meccan_secret',
+    story:"This powerful surah describes the Day of Judgment with vivid imagery — the sun folded up, stars falling, mountains moving, oceans boiling. It was revealed to shake the Quraysh out of their complacency and materialism. In the early secret period, these cosmic descriptions gave the small band of believers a profound sense of purpose: this world is temporary, and a reckoning is coming.",
+    storyBs:"Ovaj snažni suret opisuje Sudnji dan živopisnim slikama — sunce smotano, zvijezde padaju, planine se kreću, okeani ključaju. Objavljen je da potrese Kurejšije iz njihovog samozadovoljstva i materijalizma. U ranom tajnom periodu, ovi kosmički opisi su maloj grupi vjernika dali dubok osjećaj svrhe: ovaj svijet je privremen, a obračun dolazi.",
+    keyEvents:["Vivid descriptions of the Day of Judgment","Challenge to Qurayshi materialism","Strengthening early believers' conviction"],
+    ref:"Ch. 4-5" },
+  87: { period:'early_meccan_secret',
+    story:"'Glorify the name of your Lord, the Most High' — this surah taught the early Muslims to remember that God is above all things. It mentions the creation of all things, the giving of guidance, and reassures the Prophet ﷺ that he will not forget the revelation. The Prophet ﷺ used to love reciting this surah in the Eid and Friday prayers.",
+    storyBs:"'Slavi ime Gospodara svoga, Svevišnjeg' — ovaj suret je učio rane muslimane da pamte da je Allah iznad svega. Spominje stvaranje svih stvari, davanje upute, i uvjerava Poslanika ﷺ da neće zaboraviti objavu. Poslanik ﷺ je volio učiti ovaj suret na bajram i džuma namazima.",
+    keyEvents:["Command to glorify God Most High","Reassurance about preserving revelation","Connection to prayer traditions"],
+    ref:"Ch. 4-5" },
+  92: { period:'early_meccan_secret',
+    story:"This surah contrasts two paths: the one who gives, is mindful of God, and believes in goodness — and the one who is miserly, self-satisfied, and denies the truth. It was a direct commentary on the social dynamics in early Mecca, where the wealthy elite opposed Islam while the poor and enslaved were among the first believers. Abu Bakr's freeing of Bilal and other slaves is the living embodiment of this surah's message.",
+    storyBs:"Ovaj suret kontrastira dva puta: onog koji daje, svjestan je Allaha i vjeruje u dobro — i onog koji je škrt, samozadovoljan i poriče istinu. Bio je direktni komentar na društvenu dinamiku u ranoj Meki, gdje se bogata elita protivila islamu dok su siromašni i robovi bili među prvim vjernicima. Ebu Bekrovo oslobađanje Bilala i drugih robova je živi primjer poruke ovog sureta.",
+    keyEvents:["Contrast between generosity and miserliness","Abu Bakr's freeing of enslaved believers","Social dynamics of early Meccan converts"],
+    ref:"Ch. 5" },
+  89: { period:'early_meccan_secret',
+    story:"'By the dawn, and the ten nights' — this surah invokes the sacred times and recounts the destruction of past nations who rejected their prophets: the people of 'Ad, Thamud, and Pharaoh. It ends with a profound invitation: 'O tranquil soul, return to your Lord, well-pleased and well-pleasing.' This was a message of both warning and hope for the tiny community of believers facing an entire city's hostility.",
+    storyBs:"'Tako mi zore i deset noći' — ovaj suret priziva sveta vremena i pripovijeda o uništenju prošlih naroda koji su odbacili svoje poslanike: narod 'Ada, Semuda i Faraona. Završava dubokim pozivom: 'O smirena dušo, vrati se svome Gospodaru zadovoljna, a i On tobom zadovoljan.' Ovo je bila poruka i upozorenja i nade za malu zajednicu vjernika suočenu s neprijateljstvom čitavog grada.",
+    keyEvents:["Stories of destroyed nations ('Ad, Thamud, Pharaoh)","Warning to Quraysh through historical precedent","Promise of peace for the tranquil soul"],
+    ref:"Ch. 4-5" },
 };
 
 const cache = new Map();
