@@ -552,6 +552,69 @@ body::before {
   }
 }
 
+/* Auto-scroll controls */
+.autoscroll-controls {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 50;
+}
+.autoscroll-btn {
+  width: 42px;
+  height: 42px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+}
+.autoscroll-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+.autoscroll-btn.active {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 12px rgba(201,168,76,0.2);
+}
+.autoscroll-speed {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 8px;
+}
+.autoscroll-speed.visible { display: flex; }
+.autoscroll-speed label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: 'IM Fell English SC', serif;
+  letter-spacing: 0.05em;
+}
+.autoscroll-speed input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: 80px;
+  width: 20px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.autoscroll-speed-val {
+  font-size: 0.7rem;
+  color: var(--gold);
+  font-family: 'Lora', serif;
+}
+
 /* Scroll to top */
 .scroll-top {
   position: fixed;
@@ -645,6 +708,15 @@ body::before {
   <main class="main" id="main">
     <div id="content"></div>
   </main>
+</div>
+
+<div class="autoscroll-controls">
+  <div class="autoscroll-speed" id="autoscrollSpeed">
+    <label>Speed</label>
+    <input type="range" id="speedSlider" min="1" max="10" value="3" step="1">
+    <span class="autoscroll-speed-val" id="speedVal">3</span>
+  </div>
+  <button class="autoscroll-btn" id="autoscrollBtn" title="Auto-scroll for reading">▼</button>
 </div>
 
 <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
@@ -1191,6 +1263,68 @@ if (activeFilter !== 'all') {
 buildSidebar();
 renderResumeBtn();
 loadByRevIndex(currentRevIndex);
+
+// Auto-scroll
+let autoScrollActive = false;
+let autoScrollRAF = null;
+let autoScrollSpeed = 3;
+let lastScrollTime = 0;
+
+const autoscrollBtn = document.getElementById('autoscrollBtn');
+const autoscrollSpeedPanel = document.getElementById('autoscrollSpeed');
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+
+function autoScrollStep(timestamp) {
+  if (!autoScrollActive) return;
+  if (!lastScrollTime) lastScrollTime = timestamp;
+  const delta = timestamp - lastScrollTime;
+  lastScrollTime = timestamp;
+  // Speed: 0.3px/frame at 1, up to 3px/frame at 10
+  const px = (autoScrollSpeed * 0.3) * (delta / 16.67);
+  window.scrollBy(0, px);
+  // Stop if we reached the bottom
+  if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 2) {
+    stopAutoScroll();
+    return;
+  }
+  autoScrollRAF = requestAnimationFrame(autoScrollStep);
+}
+
+function startAutoScroll() {
+  autoScrollActive = true;
+  lastScrollTime = 0;
+  autoscrollBtn.classList.add('active');
+  autoscrollBtn.innerHTML = '⏸';
+  autoscrollBtn.title = 'Pause auto-scroll';
+  autoscrollSpeedPanel.classList.add('visible');
+  autoScrollRAF = requestAnimationFrame(autoScrollStep);
+}
+
+function stopAutoScroll() {
+  autoScrollActive = false;
+  if (autoScrollRAF) cancelAnimationFrame(autoScrollRAF);
+  autoScrollRAF = null;
+  autoscrollBtn.classList.remove('active');
+  autoscrollBtn.innerHTML = '▼';
+  autoscrollBtn.title = 'Auto-scroll for reading';
+  autoscrollSpeedPanel.classList.remove('visible');
+}
+
+autoscrollBtn.addEventListener('click', () => {
+  if (autoScrollActive) stopAutoScroll();
+  else startAutoScroll();
+});
+
+speedSlider.addEventListener('input', () => {
+  autoScrollSpeed = +speedSlider.value;
+  speedVal.textContent = autoScrollSpeed;
+});
+
+// Pause auto-scroll on user scroll (touch/wheel)
+let userScrolling = false;
+window.addEventListener('wheel', () => { if (autoScrollActive) stopAutoScroll(); }, { passive: true });
+window.addEventListener('touchstart', () => { if (autoScrollActive) { userScrolling = true; stopAutoScroll(); } }, { passive: true });
 </script>
 </body>
 </html>
