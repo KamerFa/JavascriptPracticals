@@ -679,6 +679,90 @@ body::before {
 }
 .resume-btn:hover { background: rgba(201,168,76,0.18); }
 .resume-btn .pin-icon { font-size: 0.95rem; }
+
+/* Reference pin */
+.ayah-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: 'Lora', serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 3px 8px;
+  margin-left: 4px;
+  transition: all 0.15s;
+  vertical-align: middle;
+}
+.ayah-ref:hover { border-color: rgba(120,180,220,0.4); color: #78b4dc; }
+.ayah-ref.referenced {
+  border-color: rgba(120,180,220,0.3);
+  background: rgba(120,180,220,0.12);
+  color: #78b4dc;
+}
+
+/* References panel */
+.references-panel {
+  margin: 4px 16px 8px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.references-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 12px;
+  background: rgba(120,180,220,0.08);
+  border: none;
+  color: #78b4dc;
+  font-family: 'Lora', serif;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.references-toggle:hover { background: rgba(120,180,220,0.14); }
+.references-toggle .ref-count {
+  background: rgba(120,180,220,0.2);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+}
+.references-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid var(--gold-dim);
+}
+.ref-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  font-family: 'Lora', serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.ref-item:last-child { border-bottom: none; }
+.ref-item:hover { background: rgba(120,180,220,0.06); color: var(--text-primary); }
+.ref-item-label { flex: 1; }
+.ref-item-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0 4px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.ref-item-remove:hover { opacity: 1; color: #e07070; }
 </style>
 </head>
 <body>
@@ -702,6 +786,7 @@ body::before {
       </div>
     </div>
     <div id="resumeContainer"></div>
+    <div id="referencesContainer"></div>
     <div class="surah-list" id="surahList"></div>
   </aside>
 
@@ -925,6 +1010,8 @@ let currentRevIndex = saved?.revIndex ?? 0;
 let activeFilter = saved?.filter ?? 'all';
 let activeLangs = saved?.langs ?? { arabic: true, transliteration: false, bosnian: false, english: false, turkish: false };
 let pinnedAyah = saved?.pinned ?? null; // { surahNum, ayahNum, revIndex, surahName }
+let referencePins = saved?.references ?? []; // [{ surahNum, ayahNum, revIndex, surahName }]
+let refsOpen = saved?.refsOpen ?? false;
 let seerahOpen = saved?.seerahOpen ?? false;
 let seerahLang = saved?.seerahLang ?? 'en';
 
@@ -934,6 +1021,8 @@ function savePrefs() {
     filter: activeFilter,
     langs: activeLangs,
     pinned: pinnedAyah,
+    references: referencePins,
+    refsOpen,
     seerahOpen,
     seerahLang
   }));
@@ -976,6 +1065,62 @@ async function resumeFromPin() {
     const el = document.querySelector(`.ayah-pin[data-surah="${pinnedAyah.surahNum}"][data-ayah="${pinnedAyah.ayahNum}"]`);
     if (el) el.closest('.ayah').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 300);
+}
+
+function toggleReference(surahNum, ayahNum, revIndex, surahName) {
+  const idx = referencePins.findIndex(r => r.surahNum === surahNum && r.ayahNum === ayahNum);
+  if (idx >= 0) {
+    referencePins.splice(idx, 1);
+  } else {
+    referencePins.push({ surahNum, ayahNum, revIndex, surahName });
+  }
+  savePrefs();
+  updateRefButtons();
+  renderReferencesPanel();
+}
+
+function updateRefButtons() {
+  document.querySelectorAll('.ayah-ref').forEach(btn => {
+    const s = +btn.dataset.surah, a = +btn.dataset.ayah;
+    const isRef = referencePins.some(r => r.surahNum === s && r.ayahNum === a);
+    btn.classList.toggle('referenced', isRef);
+    btn.innerHTML = isRef ? '🔖 Saved' : '🔖 Ref';
+  });
+}
+
+function renderReferencesPanel() {
+  const container = document.getElementById('referencesContainer');
+  if (!referencePins.length) { container.innerHTML = ''; return; }
+  const items = referencePins.map((r, i) => `
+    <div class="ref-item" onclick="goToReference(${i})">
+      <span class="ref-item-label">${r.surahName} : ${r.ayahNum}</span>
+      <button class="ref-item-remove" onclick="event.stopPropagation();removeReference(${i})" title="Remove">✕</button>
+    </div>`).join('');
+  container.innerHTML = `
+    <div class="references-panel">
+      <button class="references-toggle" onclick="refsOpen=!refsOpen;savePrefs();renderReferencesPanel()">
+        <span>🔖 References</span>
+        <span class="ref-count">${referencePins.length}</span>
+      </button>
+      ${refsOpen ? `<div class="references-list">${items}</div>` : ''}
+    </div>`;
+}
+
+async function goToReference(idx) {
+  const r = referencePins[idx];
+  if (!r) return;
+  await loadByRevIndex(r.revIndex);
+  setTimeout(() => {
+    const el = document.querySelector(`.ayah-ref[data-surah="${r.surahNum}"][data-ayah="${r.ayahNum}"]`);
+    if (el) el.closest('.ayah').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+}
+
+function removeReference(idx) {
+  referencePins.splice(idx, 1);
+  savePrefs();
+  updateRefButtons();
+  renderReferencesPanel();
 }
 
 function getCurrentEntry() { return REVELATION_ORDER[currentRevIndex]; }
@@ -1171,9 +1316,12 @@ async function loadByRevIndex(idx) {
 
     for (let i = 0; i < ar.length; i++) {
       const isPinned = pinnedAyah && pinnedAyah.surahNum === surahNum && pinnedAyah.ayahNum === ar[i].numberInSurah;
+      const isRef = referencePins.some(r => r.surahNum === surahNum && r.ayahNum === ar[i].numberInSurah);
+      const escapedName = name.replace(/'/g, "\\'");
       html += `<div class="ayah">
         <div class="ayah-num-badge">${ar[i].numberInSurah}</div>
-        <button class="ayah-pin ${isPinned ? 'pinned' : ''}" data-surah="${surahNum}" data-ayah="${ar[i].numberInSurah}" onclick="togglePin(${surahNum},${ar[i].numberInSurah},${idx},'${name.replace(/'/g, "\\'")}')">${isPinned ? '📌 Pinned' : '📌 Pin here'}</button>
+        <button class="ayah-pin ${isPinned ? 'pinned' : ''}" data-surah="${surahNum}" data-ayah="${ar[i].numberInSurah}" onclick="togglePin(${surahNum},${ar[i].numberInSurah},${idx},'${escapedName}')">${isPinned ? '📌 Pinned' : '📌 Pin here'}</button>
+        <button class="ayah-ref ${isRef ? 'referenced' : ''}" data-surah="${surahNum}" data-ayah="${ar[i].numberInSurah}" onclick="toggleReference(${surahNum},${ar[i].numberInSurah},${idx},'${escapedName}')">${isRef ? '🔖 Saved' : '🔖 Ref'}</button>
         <div class="ayah-arabic" ${activeLangs.arabic ? '' : 'style="display:none"'}>${ar[i].text}</div>
         <div class="ayah-transliteration" data-lang="transliteration" ${activeLangs.transliteration ? '' : 'style="display:none"'}>${tl[i].text}</div>
         <div class="ayah-translation" data-lang="bosnian" ${activeLangs.bosnian ? '' : 'style="display:none"'}><span class="lang-label">Bosnian</span>${bs[i].text}</div>
@@ -1262,6 +1410,7 @@ if (activeFilter !== 'all') {
 }
 buildSidebar();
 renderResumeBtn();
+renderReferencesPanel();
 loadByRevIndex(currentRevIndex);
 
 // Auto-scroll
